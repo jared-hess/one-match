@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { getNormalDisplayName, normalUserCopy } from '../../lib/normalDisplay';
+import { getNormalDisplayName } from '../../lib/normalDisplay';
 import type { JaredProfile } from '../../types';
 
 type SwipeCardProps = {
@@ -20,20 +20,9 @@ export function SwipeCard({ profile, isPeek = false }: SwipeCardProps) {
         {profile.location}
       </div>
       <div className="relative p-6 text-cream-50">
-        <div className="mb-4 inline-flex rounded-full border border-white/45 bg-white/16 px-4 py-2 text-xs font-extrabold uppercase tracking-[0.24em] backdrop-blur">
-          Focused discovery
-        </div>
         <h2 className="font-display text-5xl font-semibold leading-none tracking-[-0.05em]">
           {getNormalDisplayName()}, {profile.age_label}
         </h2>
-        <p className="mt-4 line-clamp-3 text-base leading-7 text-cream-50/86">{normalUserCopy(profile.bio)}</p>
-        <div className="mt-5 flex flex-wrap gap-2">
-          {profile.tags.slice(0, 3).map((tag) => (
-            <span className="rounded-full bg-cream-50/16 px-3 py-1 text-xs font-bold text-cream-50/90" key={tag}>
-              {normalUserCopy(tag)}
-            </span>
-          ))}
-        </div>
         {!isPeek ? (
           <Link className="mt-6 inline-flex text-sm font-extrabold text-cream-50 underline decoration-blush-100/70 underline-offset-4" to={`/profile/${profile.id}`}>
             Read the profile

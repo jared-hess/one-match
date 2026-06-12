@@ -16,9 +16,14 @@ export function PendingState() {
           ? `${queuedCount} local like${queuedCount === 1 ? '' : 's'} will replay after sign-in and profile completion when live data is available.`
           : 'No local likes are waiting right now. You can keep browsing without signing in.'}
       </div>
-      <Link className="mt-6 inline-flex rounded-full bg-blush-500 px-5 py-3 text-sm font-extrabold text-cream-50 shadow-glow" to="/swipe">
-        Continue browsing
-      </Link>
+      <div className="mt-6 flex flex-wrap gap-3">
+        <Link className="inline-flex rounded-full bg-blush-500 px-5 py-3 text-sm font-extrabold text-cream-50 shadow-glow" to="/settings">
+          Sign in or complete profile
+        </Link>
+        <Link className="inline-flex rounded-full border border-blush-100 bg-cream-50/80 px-5 py-3 text-sm font-extrabold text-merlot-900" to="/swipe">
+          Continue browsing
+        </Link>
+      </div>
     </section>
   );
 }

@@ -9,6 +9,13 @@ export type PhotoUploadResult = {
   publicUrl: string;
 };
 
+export function getJaredProfilePhotoStoragePath(profileId: string, fileName: string, timestamp = Date.now()): string {
+  const safeProfileId = profileId.trim() || 'new-profile';
+  const extension = fileName.split('.').pop()?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
+
+  return `${safeProfileId}/${timestamp}.${extension}`;
+}
+
 export async function uploadJaredProfilePhoto(
   path: string,
   file: File,

@@ -1,71 +1,88 @@
+import type { ReactNode } from 'react';
 import { AuthGate } from '../components/AuthGate';
 import { JaredRouteGuard } from '../components/JaredRouteGuard';
 import { PlaceholderPage, type PlaceholderPageProps } from './PlaceholderPage';
+import {
+  CompleteProfilePage,
+  LandingPage,
+  MatchPage,
+  OnboardingPage,
+  PendingPage,
+  PreferencesPage,
+  ProfileDetailPage,
+  SwipePage
+} from './NormalPages';
 
 type RouteConfig = PlaceholderPageProps & {
   path: string;
   guarded?: 'auth' | 'jared';
+  element?: ReactNode;
 };
 
 export const normalRouteConfigs: RouteConfig[] = [
   {
     path: '/',
     eyebrow: 'Welcome',
-    title: 'A careful foundation for one very specific match.',
-    description: 'DateJared is now mapped as a private, mobile-first app shell with auth-aware routes and centralized data access.',
-    note: 'This welcome route is intentionally only the shell: swipe cards, Jared workflows, messaging, CMS, demo mode, and legal copy come in later tasks.'
+    title: 'Dating, optimized.',
+    description: 'Focused discovery for exactly one person.',
+    note: 'Start the normal DateJared flow without sign-in.',
+    element: <LandingPage />
   },
   {
     path: '/onboarding',
     eyebrow: 'Onboarding',
-    title: 'Profile basics will start here.',
-    description: 'An anonymous-capable placeholder for age confirmation, preferences, and first-run readiness.',
-    note: 'Full onboarding fields are intentionally deferred; this route stays open so users can begin before sign-in.'
+    title: 'Start with age confirmation.',
+    description: 'Anonymous-capable age gate.',
+    note: 'Continue only after confirming 18+.',
+    element: <OnboardingPage />
   },
   {
     path: '/preferences',
     eyebrow: 'Preferences',
-    title: 'Dating preferences get a reserved room.',
-    description: 'An anonymous-capable placeholder for future preference controls and matching context.',
-    note: 'No preference mutation UI is implemented yet; Task 5 can use this route before auth.'
+    title: 'Set the frame before the deck.',
+    description: 'Anonymous-capable preference controls.',
+    note: 'Preferences stay local until profile completion.',
+    element: <PreferencesPage />
   },
   {
     path: '/swipe',
     eyebrow: 'Swipe',
-    title: 'The deck route exists, but the deck is not built yet.',
-    description: 'Task 5 will own swipe cards and interactions; this route only confirms navigation and data boundaries.',
-    note: 'This route intentionally renders before sign-in. Persisted swipe writes are available through src/lib/swipes.ts only.'
+    title: 'Choose deliberately.',
+    description: 'Swipe cards render without sign-in.',
+    note: 'Anonymous likes stay queued locally.',
+    element: <SwipePage />
   },
   {
     path: '/profile/:id',
     eyebrow: 'Profile',
-    title: 'A Jared profile detail placeholder.',
-    description: 'This anonymous-capable route reserves deep-link behavior for a single Jared profile without implementing full cards.',
-    note: 'The dynamic id is displayed for routing evidence only.'
+    title: 'Jared profile detail.',
+    description: 'Anonymous-capable detail route.',
+    note: 'Internal labels stay hidden.',
+    element: <ProfileDetailPage />
   },
   {
     path: '/complete-profile',
-    guarded: 'auth',
     eyebrow: 'Complete profile',
-    title: 'Your DateJared profile needs a careful finish.',
-    description: 'A protected placeholder for normal-user profile completion after Google auth.',
-    note: 'Profile upsert helpers capture email and force role=user, but this UI is intentionally pending.'
+    title: 'Tell Jared enough to respond seriously.',
+    description: 'Profile completion requires display name, age confirmation, and city.',
+    note: 'Replay queued likes only after auth and successful profile save.',
+    element: <CompleteProfilePage />
   },
   {
     path: '/pending',
-    guarded: 'auth',
     eyebrow: 'Pending',
-    title: 'Your interest can wait here gracefully.',
-    description: 'A protected holding route for likes awaiting Jared decisions.',
-    note: 'Jared decision business UI is deferred to Task 6.'
+    title: 'Your interest is pending.',
+    description: 'Like sent; messaging if Jared matches back.',
+    note: 'No chat opens from a one-sided like.',
+    element: <PendingPage />
   },
   {
     path: '/match',
-    guarded: 'auth',
     eyebrow: 'Match',
-    title: 'Match state has a home.',
-    description: 'A protected placeholder for matched relationship confirmation and next-step routing.',
-    note: 'No full match workflow is implemented yet.'
+    title: 'It’s a Match.',
+    description: 'You and Jared have both expressed interest.',
+    note: 'Messaging remains deferred.',
+    element: <MatchPage />
   },
   {
     path: '/messages',
@@ -198,7 +215,7 @@ export const jaredRouteConfigs: RouteConfig[] = [
 ];
 
 export function renderConfiguredRoute(config: RouteConfig) {
-  const page = <PlaceholderPage {...config} />;
+  const page = config.element ?? <PlaceholderPage {...config} />;
 
   if (config.guarded === 'jared') {
     return <JaredRouteGuard>{page}</JaredRouteGuard>;

@@ -3,11 +3,20 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { InboundLikeCard } from '../components/jared/InboundLikeCard';
 import { InboundLikeDetail } from '../components/jared/InboundLikeDetail';
 import { JaredHome } from '../components/jared/JaredHome';
+import { JaredProfileForm } from '../components/jared/JaredProfileForm';
+import { JaredProfileList } from '../components/jared/JaredProfileList';
 import { RelationshipStatusBadge } from '../components/jared/RelationshipStatusBadge';
 import { ChatThread } from '../components/messages/ChatThread';
 import { ConversationList } from '../components/messages/ConversationList';
 import { PageShell } from '../components/PageShell';
-import { listAllJaredProfilesForJared } from '../lib/jaredProfiles';
+import {
+  archiveJaredProfile,
+  createJaredProfile,
+  getJaredProfileForJared,
+  listAllJaredProfilesForJared,
+  updateJaredProfile,
+  updateJaredProfileSortOrder
+} from '../lib/jaredProfiles';
 import {
   fetchJaredMessagingConversation,
   fetchJaredMessagingConversations,
@@ -18,7 +27,7 @@ import {
   type MessagingConversation
 } from '../lib/messages';
 import { addJaredNote, decideRelationship, fetchJaredInboundContext, fetchJaredInboundContexts, matchRelationshipBack } from '../lib/relationships';
-import type { InboundRelationshipContext, JaredProfile, Message, RelationshipStatus } from '../types';
+import type { InboundRelationshipContext, JaredProfile, JaredProfileInsert, JaredProfileUpdate, Message, RelationshipStatus } from '../types';
 
 function useJaredContexts(status?: RelationshipStatus) {
   const [contexts, setContexts] = useState<InboundRelationshipContext[]>([]);
@@ -446,6 +455,221 @@ export function JaredMessagesDetailPage() {
           statusText={realtimeText}
         />
       ) : null}
+    </PageShell>
+  );
+}
+
+export function JaredProfilesPage() {
+  const [profiles, setProfiles] = useState<JaredProfile[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [status, setStatus] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async (showLoading = true) => {
+    if (showLoading) {
+      setLoading(true);
+    }
+    setError(null);
+
+    try {
+      setProfiles(await listAllJaredProfilesForJared());
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Unable to load Jared profiles.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+
+    listAllJaredProfilesForJared()
+      .then((nextProfiles) => {
+        if (mounted) {
+          setProfiles(nextProfiles);
+        }
+      })
+      .catch((caught) => {
+        if (mounted) {
+          setError(caught instanceof Error ? caught.message : 'Unable to load Jared profiles.');
+        }
+      })
+      .finally(() => {
+        if (mounted) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  async function handleMutation(action: () => Promise<{ error: Error | null; demoMode: boolean }>, fallbackStatus: string) {
+    setStatus(null);
+    const result = await action();
+
+    if (result.error) {
+      setStatus(result.error.message);
+      return;
+    }
+
+    setStatus(result.demoMode ? 'Demo mode: write skipped safely.' : fallbackStatus);
+    await load(false);
+  }
+
+  return (
+    <PageShell eyebrow="Jared profiles" title="Manage the swipe-deck versions of Jared." description="Create, pause, archive, reorder, and preview profiles without exposing CMS labels to normal users.">
+      <div className="mb-5 flex flex-wrap gap-3">
+        <Link className="rounded-full bg-blush-500 px-5 py-3 text-sm font-extrabold text-cream-50 shadow-glow" to="/jared/profiles/new">
+          New profile
+        </Link>
+        <button className="rounded-full border border-blush-100 bg-cream-50/80 px-5 py-3 text-sm font-extrabold text-merlot-900" onClick={() => void load(false)} type="button">
+          Refresh
+        </button>
+      </div>
+      {loading ? <EmptyJaredState title="Loading profiles" description="Checking the live CMS table for Jared profile rows." /> : null}
+      {error ? <EmptyJaredState title="Profiles unavailable" description={error} /> : null}
+      {status ? <EmptyJaredState title="Profile update" description={status} /> : null}
+      <JaredProfileList
+        onArchive={(profile) => void handleMutation(() => archiveJaredProfile(profile.id), 'Profile archived without hard-deleting it.')}
+        onMove={(profile, direction) => void handleMutation(() => updateJaredProfileSortOrder(profiles, profile.id, direction), 'Profile sort order updated.')}
+        onToggleActive={(profile) => void handleMutation(() => updateJaredProfile(profile.id, { active: !profile.active, archived: profile.archived && !profile.active ? false : profile.archived }), 'Profile active state updated.')}
+        onToggleDemo={(profile) => void handleMutation(() => updateJaredProfile(profile.id, { demo_eligible: !profile.demo_eligible }), 'Profile demo eligibility updated.')}
+        profiles={profiles}
+      />
+    </PageShell>
+  );
+}
+
+export function JaredProfileNewPage() {
+  const navigate = useNavigate();
+  const [status, setStatus] = useState<string | null>(null);
+
+  async function handleCreate(input: JaredProfileInsert | JaredProfileUpdate) {
+    setStatus(null);
+    const result = await createJaredProfile(input as JaredProfileInsert);
+
+    if (result.error) {
+      setStatus(result.error.message);
+      return;
+    }
+
+    if (result.demoMode) {
+      setStatus('Demo mode: create skipped safely.');
+      return;
+    }
+
+    navigate(result.data ? `/jared/profiles/${result.data.id}` : '/jared/profiles');
+  }
+
+  return (
+    <PageShell eyebrow="New Jared profile" title="Create a new profile card." description="Draft profiles can stay inactive until Jared is ready to add them to the normal swipe deck.">
+      {status ? <EmptyJaredState title="Create unavailable" description={status} /> : null}
+      <JaredProfileForm onSubmit={handleCreate} profile={null} />
+    </PageShell>
+  );
+}
+
+export function JaredProfileEditPage() {
+  const { id } = useParams();
+  const [profile, setProfile] = useState<JaredProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [status, setStatus] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    if (!id) {
+      setError('Missing profile id.');
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      setProfile(await getJaredProfileForJared(id));
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Unable to load this Jared profile.');
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    if (!id) {
+      Promise.resolve().then(() => {
+        if (mounted) {
+          setError('Missing profile id.');
+          setLoading(false);
+        }
+      });
+
+      return () => {
+        mounted = false;
+      };
+    }
+
+    getJaredProfileForJared(id)
+      .then((nextProfile) => {
+        if (mounted) {
+          setProfile(nextProfile);
+        }
+      })
+      .catch((caught) => {
+        if (mounted) {
+          setError(caught instanceof Error ? caught.message : 'Unable to load this Jared profile.');
+        }
+      })
+      .finally(() => {
+        if (mounted) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [id]);
+
+  async function handleUpdate(input: JaredProfileInsert | JaredProfileUpdate) {
+    if (!profile) {
+      setStatus('Profile is not loaded yet.');
+      return;
+    }
+
+    setStatus(null);
+    const result = await updateJaredProfile(profile.id, input);
+
+    if (result.error) {
+      setStatus(result.error.message);
+      return;
+    }
+
+    if (result.demoMode) {
+      setStatus('Demo mode: update skipped safely.');
+      return;
+    }
+
+    setStatus('Profile saved.');
+    await load();
+  }
+
+  return (
+    <PageShell eyebrow="Edit Jared profile" title="Tune one Jared profile." description="Profile edits stay in the data layer, and the preview uses the same surface normal users see.">
+      <div className="mb-5 flex flex-wrap gap-3">
+        <Link className="rounded-full border border-blush-100 bg-cream-50/80 px-5 py-3 text-sm font-extrabold text-merlot-900" to="/jared/profiles">
+          Back to profiles
+        </Link>
+      </div>
+      {loading ? <EmptyJaredState title="Loading profile" description="Fetching the CMS row before opening the editor." /> : null}
+      {error ? <EmptyJaredState title="Profile unavailable" description={error} /> : null}
+      {status ? <EmptyJaredState title="Profile save" description={status} /> : null}
+      {!loading && !profile ? <EmptyJaredState title="Profile not found" description="No Jared profile matched this id or slug." /> : null}
+      {profile ? <JaredProfileForm onSubmit={handleUpdate} profile={profile} /> : null}
     </PageShell>
   );
 }

@@ -3,11 +3,14 @@ import { MemoryRouter, RouterProvider } from 'react-router-dom';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { InboundLikeCard } from './components/jared/InboundLikeCard';
 import { InboundLikeDetail } from './components/jared/InboundLikeDetail';
+import { JaredProfilePreview } from './components/jared/JaredProfilePreview';
 import { RelationshipStatusBadge } from './components/jared/RelationshipStatusBadge';
 import { ChatThread } from './components/messages/ChatThread';
 import { fallbackJaredProfiles } from './data/jaredProfiles';
+import { createJaredProfile } from './lib/jaredProfiles';
 import { isMatchedOpenConversation, sendMessage } from './lib/messages';
 import { addJaredNote, isProfileCompleteForJared, matchRelationshipBack } from './lib/relationships';
+import { getJaredProfilePhotoStoragePath, JARED_PROFILE_PHOTOS_BUCKET, uploadJaredProfilePhoto } from './lib/storage';
 import { getLocalSwipes, getQueuedSwipes, LOCAL_SWIPES_KEY, QUEUED_SWIPES_KEY, recordAnonymousSwipe, recordSwipe, VIEWED_COUNT_KEY } from './lib/swipes';
 import { getSupabaseAvailability } from './lib/supabase';
 import { createTestRouter } from './router';
@@ -244,6 +247,67 @@ describe('App', () => {
     expect(result.demoMode).toBe(true);
     expect(result.error).toBeNull();
     expect(result.data).toBeNull();
+  });
+
+  it('renders CMS preview through the normal SwipeCard boundary', () => {
+    render(
+      <MemoryRouter>
+        <JaredProfilePreview
+          profile={{
+            ...fallbackJaredProfiles[0],
+            internal_label: 'Private CMS label must stay private',
+            slug: 'private-cms-slug',
+            display_name: 'Secret display name'
+          }}
+        />
+      </MemoryRouter>
+    );
+
+    expect(screen.getByRole('heading', { name: /jared, 30-ish/i })).toBeInTheDocument();
+    expect(screen.getAllByText('Oakland')).not.toHaveLength(0);
+    expect(screen.queryByText(/private cms label/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/private-cms-slug/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/secret display name/i)).not.toBeInTheDocument();
+  });
+
+  it('keeps CMS routes behind the existing Jared guard when Supabase is unavailable', () => {
+    render(<RouterProvider router={createTestRouter(['/jared/profiles'])} />);
+
+    expect(screen.getByText(/live datejared is waiting for supabase keys/i)).toBeInTheDocument();
+    expect(screen.queryByText(/manage the swipe-deck versions of jared/i)).not.toBeInTheDocument();
+  });
+
+  it('targets the Jared profile photo bucket path helper without uploading in demo mode', async () => {
+    const path = getJaredProfilePhotoStoragePath('profile-123', 'Jared Portrait.PNG', 12345);
+    const file = new File(['photo'], 'Jared Portrait.PNG', { type: 'image/png' });
+    const result = await uploadJaredProfilePhoto(path, file, { demoMode: true });
+
+    expect(JARED_PROFILE_PHOTOS_BUCKET).toBe('jared-profile-photos');
+    expect(path).toBe('profile-123/12345.png');
+    expect(result.demoMode).toBe(true);
+    expect(result.error).toBeNull();
+  });
+
+  it('reports unavailable safely for Jared profile creates without Supabase', async () => {
+    const result = await createJaredProfile({
+      slug: 'safe-unavailable-profile',
+      internal_label: 'Safe unavailable profile',
+      display_name: 'Jared',
+      age_label: '30-ish',
+      location: 'Oakland',
+      bio: 'Safe unavailable path.',
+      prompts: [],
+      tags: [],
+      image_urls: [],
+      sort_order: 999,
+      demo_eligible: false,
+      active: false,
+      archived: false
+    });
+
+    expect(result.demoMode).toBe(false);
+    expect(result.data).toBeNull();
+    expect(result.error?.message).toMatch(/supabase/i);
   });
 
   it('short-circuits Jared match-back and notes in demo/unavailable modes', async () => {

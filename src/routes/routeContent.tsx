@@ -13,7 +13,18 @@ import {
   ProfileDetailPage,
   SwipePage
 } from './NormalPages';
-import { JaredHomePage, JaredInboundDetailPage, JaredInboundPage, JaredMatchesPage, JaredMessagesDetailPage, JaredMessagesPage, JaredSettingsPage } from './JaredPages';
+import {
+  JaredHomePage,
+  JaredInboundDetailPage,
+  JaredInboundPage,
+  JaredMatchesPage,
+  JaredMessagesDetailPage,
+  JaredMessagesPage,
+  JaredProfileEditPage,
+  JaredProfileNewPage,
+  JaredProfilesPage,
+  JaredSettingsPage
+} from './JaredPages';
 
 type RouteConfig = PlaceholderPageProps & {
   path: string;
@@ -185,25 +196,28 @@ export const jaredRouteConfigs: RouteConfig[] = [
     path: '/jared/profiles',
     guarded: 'jared',
     eyebrow: 'Jared profiles',
-    title: 'Profile CMS routing starts here.',
-    description: 'A guarded placeholder for listing active, paused, draft, and archived Jared profiles.',
-    note: 'Task 8 owns the real CMS and uploader UI.'
+    title: 'Manage Jared profile cards.',
+    description: 'List active, paused, draft, and archived Jared profiles.',
+    note: 'CMS controls stay private to Jared.',
+    element: <JaredProfilesPage />
   },
   {
     path: '/jared/profiles/new',
     guarded: 'jared',
     eyebrow: 'New Jared profile',
-    title: 'A create-profile route is reserved.',
-    description: 'A guarded placeholder for future Jared profile creation.',
-    note: 'No form or upload UI is implemented yet.'
+    title: 'Create a profile card.',
+    description: 'A guarded form for profile creation.',
+    note: 'Writes are centralized in src/lib/jaredProfiles.ts.',
+    element: <JaredProfileNewPage />
   },
   {
     path: '/jared/profiles/:id',
     guarded: 'jared',
     eyebrow: 'Edit Jared profile',
-    title: 'A single CMS edit route is reserved.',
-    description: 'A guarded dynamic placeholder aligned to the CMS schema.',
-    note: 'The display name remains schema-editable, but UI is deferred.'
+    title: 'Edit a profile card.',
+    description: 'A guarded editor aligned to the CMS schema.',
+    note: 'Preview uses the normal SwipeCard surface.',
+    element: <JaredProfileEditPage />
   },
   {
     path: '/jared/demo',

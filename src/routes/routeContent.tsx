@@ -24,7 +24,7 @@ export const normalRouteConfigs: RouteConfig[] = [
     path: '/',
     eyebrow: 'Welcome',
     title: 'Dating, optimized.',
-    description: 'Focused discovery for exactly one person.',
+    description: 'A focused discovery experience designed to reduce romantic decision fatigue.',
     note: 'Start the normal DateJared flow without sign-in.',
     element: <LandingPage />
   },

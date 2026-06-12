@@ -15,7 +15,7 @@ export function LandingPage() {
       <p className="text-xs font-extrabold uppercase tracking-[0.28em] text-blush-600">DateJared</p>
       <h1 className="mt-4 font-display text-6xl font-semibold leading-[0.88] tracking-[-0.06em] text-merlot-900">Dating, optimized.</h1>
       <p className="mt-5 text-base leading-7 text-ink-600">
-        Focused discovery for exactly one person: browse Jared profiles, notice the differences, and send interest without needing an account first.
+        A focused discovery experience designed to reduce romantic decision fatigue.
       </p>
       <div className="mt-7 grid gap-3">
         <Link className="rounded-full bg-blush-500 px-5 py-3 text-center text-sm font-extrabold text-cream-50 shadow-glow" to="/onboarding">
@@ -74,7 +74,8 @@ export function PreferencesPage() {
         <label className="block text-sm font-bold text-ink-900">
           Interested in
           <select className="mt-2 w-full rounded-3xl border border-blush-100 bg-cream-50/70 px-4 py-3 text-ink-900 outline-none focus:border-blush-500" defaultValue="jared">
-            <option value="jared">Jared</option>
+            <option value="men">Men</option>
+            <option value="focused">Open to focused matches</option>
           </select>
         </label>
         <label className="block text-sm font-bold text-ink-900">

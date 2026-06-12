@@ -1,7 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import { RouterProvider } from 'react-router-dom';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { getQueuedSwipes, QUEUED_SWIPES_KEY, recordAnonymousSwipe, recordSwipe, VIEWED_COUNT_KEY } from './lib/swipes';
+import { fallbackJaredProfiles } from './data/jaredProfiles';
+import { getLocalSwipes, getQueuedSwipes, LOCAL_SWIPES_KEY, QUEUED_SWIPES_KEY, recordAnonymousSwipe, recordSwipe, VIEWED_COUNT_KEY } from './lib/swipes';
 import { getSupabaseAvailability } from './lib/supabase';
 import { createTestRouter } from './router';
 
@@ -15,8 +16,19 @@ describe('App', () => {
 
     expect(screen.getAllByText('DateJared').length).toBeGreaterThan(0);
     expect(screen.getByRole('heading', { name: /dating, optimized/i })).toBeInTheDocument();
-    expect(screen.getByText(/focused discovery for exactly one person/i)).toBeInTheDocument();
+    expect(screen.getByText(/focused discovery experience designed to reduce romantic decision fatigue/i)).toBeInTheDocument();
+    expect(screen.queryByText(/exactly one person/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/browse Jared profiles/i)).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /jared/i })).not.toBeInTheDocument();
+  });
+
+  it('renders preferences without exposing a Jared-specific interest option', () => {
+    render(<RouterProvider router={createTestRouter(['/preferences'])} />);
+
+    expect(screen.getByText('Interested in')).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Men' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: /open to focused matches/i })).toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: /^Jared$/i })).not.toBeInTheDocument();
   });
 
   it('renders the swipe route without requiring sign-in', async () => {
@@ -29,13 +41,33 @@ describe('App', () => {
   });
 
   it('renders Jared profile details without internal labels or slugs', async () => {
-    render(<RouterProvider router={createTestRouter(['/profile/fallback-jared-dinner-conversation'])} />);
+    render(<RouterProvider router={createTestRouter([`/profile/${fallbackJaredProfiles[0].id}`])} />);
 
     expect(await screen.findByRole('heading', { name: /jared, 30-ish/i })).toBeInTheDocument();
     expect(screen.getAllByText('Oakland').length).toBeGreaterThan(0);
     expect(screen.getByText(/good conversation, warm lighting/i)).toBeInTheDocument();
     expect(screen.queryByText(/Dinner \/ conversation Jared/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/jared-dinner-conversation/i)).not.toBeInTheDocument();
+  });
+
+  it('uses opaque fallback ids for normal profile links', async () => {
+    render(<RouterProvider router={createTestRouter(['/swipe'])} />);
+
+    const detailLink = await screen.findByRole('link', { name: /read the profile/i });
+    expect(detailLink).toHaveAttribute('href', `/profile/${fallbackJaredProfiles[0].id}`);
+    expect(fallbackJaredProfiles[0].id).toMatch(/^[0-9a-f-]{36}$/);
+    expect(detailLink.getAttribute('href')).not.toMatch(/jared-dinner-conversation|fallback-jared/i);
+  });
+
+  it('hardcodes the normal visible display name even if profile data changes', async () => {
+    const originalName = fallbackJaredProfiles[0].display_name;
+    fallbackJaredProfiles[0].display_name = 'Internal Alternate Name';
+
+    render(<RouterProvider router={createTestRouter([`/profile/${fallbackJaredProfiles[0].id}`])} />);
+
+    expect(await screen.findByRole('heading', { name: /jared, 30-ish/i })).toBeInTheDocument();
+    expect(screen.queryByText(/Internal Alternate Name/i)).not.toBeInTheDocument();
+    fallbackJaredProfiles[0].display_name = originalName;
   });
 
   it('does not create a Supabase client when public env is missing', () => {
@@ -56,15 +88,21 @@ describe('App', () => {
     expect(result.data).toBeNull();
   });
 
-  it('queues anonymous right and super swipes locally while counting all viewed profiles', () => {
+  it('stores all anonymous swipes locally while queueing only right and super likes', () => {
     recordAnonymousSwipe('profile-left', 'left');
     recordAnonymousSwipe('profile-right', 'right');
     recordAnonymousSwipe('profile-super', 'super');
 
+    expect(getLocalSwipes()).toEqual([
+      expect.objectContaining({ jaredProfileId: 'profile-left', direction: 'left' }),
+      expect.objectContaining({ jaredProfileId: 'profile-right', direction: 'right' }),
+      expect.objectContaining({ jaredProfileId: 'profile-super', direction: 'super' })
+    ]);
     expect(getQueuedSwipes()).toEqual([
       expect.objectContaining({ jaredProfileId: 'profile-right', direction: 'right' }),
       expect.objectContaining({ jaredProfileId: 'profile-super', direction: 'super' })
     ]);
+    expect(JSON.parse(window.localStorage.getItem(LOCAL_SWIPES_KEY) ?? '[]')).toHaveLength(3);
     expect(JSON.parse(window.localStorage.getItem(QUEUED_SWIPES_KEY) ?? '[]')).toHaveLength(2);
     expect(JSON.parse(window.localStorage.getItem(VIEWED_COUNT_KEY) ?? '0')).toBe(3);
   });

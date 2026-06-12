@@ -12,6 +12,16 @@ describe('App', () => {
     expect(screen.getByText('DateJared')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /careful foundation for one very specific match/i })).toBeInTheDocument();
     expect(screen.getByText(/swipe cards, Jared workflows, messaging, CMS, demo mode, and legal copy come in later tasks/i)).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /jared/i })).not.toBeInTheDocument();
+  });
+
+  it('renders the swipe route without requiring sign-in', () => {
+    render(<RouterProvider router={createTestRouter(['/swipe'])} />);
+
+    expect(screen.getByRole('heading', { name: /deck route exists/i })).toBeInTheDocument();
+    expect(screen.getByText(/intentionally renders before sign-in/i)).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: /waiting for Supabase keys/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /jared/i })).not.toBeInTheDocument();
   });
 
   it('does not create a Supabase client when public env is missing', () => {

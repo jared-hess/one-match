@@ -17,34 +17,30 @@ export const normalRouteConfigs: RouteConfig[] = [
   },
   {
     path: '/onboarding',
-    guarded: 'auth',
     eyebrow: 'Onboarding',
     title: 'Profile basics will start here.',
-    description: 'A protected placeholder for age confirmation, preferences, and first-run readiness.',
-    note: 'Full onboarding fields are intentionally deferred; this route proves auth and app flow wiring.'
+    description: 'An anonymous-capable placeholder for age confirmation, preferences, and first-run readiness.',
+    note: 'Full onboarding fields are intentionally deferred; this route stays open so users can begin before sign-in.'
   },
   {
     path: '/preferences',
-    guarded: 'auth',
     eyebrow: 'Preferences',
     title: 'Dating preferences get a reserved room.',
-    description: 'A protected placeholder for future preference controls and matching context.',
-    note: 'No preference mutation UI is implemented yet.'
+    description: 'An anonymous-capable placeholder for future preference controls and matching context.',
+    note: 'No preference mutation UI is implemented yet; Task 5 can use this route before auth.'
   },
   {
     path: '/swipe',
-    guarded: 'auth',
     eyebrow: 'Swipe',
     title: 'The deck route exists, but the deck is not built yet.',
     description: 'Task 5 will own swipe cards and interactions; this route only confirms navigation and data boundaries.',
-    note: 'Persisted swipe writes are available through src/lib/swipes.ts only.'
+    note: 'This route intentionally renders before sign-in. Persisted swipe writes are available through src/lib/swipes.ts only.'
   },
   {
     path: '/profile/:id',
-    guarded: 'auth',
     eyebrow: 'Profile',
     title: 'A Jared profile detail placeholder.',
-    description: 'This route reserves deep-link behavior for a single Jared profile without implementing full cards.',
+    description: 'This anonymous-capable route reserves deep-link behavior for a single Jared profile without implementing full cards.',
     note: 'The dynamic id is displayed for routing evidence only.'
   },
   {
@@ -103,11 +99,10 @@ export const normalRouteConfigs: RouteConfig[] = [
   },
   {
     path: '/delete-data',
-    guarded: 'auth',
     eyebrow: 'Delete data',
-    title: 'Data deletion has a protected destination.',
-    description: 'A protected placeholder for future deletion request UX.',
-    note: 'The backend status contract includes requested, completed, and cancelled; UI comes later.'
+    title: 'Data deletion guidance has a public destination.',
+    description: 'This placeholder will later explain signed-in request behavior and anonymous guidance without blocking the route today.',
+    note: 'The backend status contract includes requested, completed, and cancelled; Task 10 owns the real request workflow.'
   }
 ];
 

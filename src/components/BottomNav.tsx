@@ -1,18 +1,17 @@
-import { Heart, MessageCircle, Settings, Sparkles, UserRound } from 'lucide-react';
+import { Heart, MessageCircle, Settings, Sparkles } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 
 const navItems = [
   { to: '/swipe', label: 'Swipe', icon: Heart },
   { to: '/match', label: 'Match', icon: Sparkles },
   { to: '/messages', label: 'Messages', icon: MessageCircle },
-  { to: '/settings', label: 'Settings', icon: Settings },
-  { to: '/jared', label: 'Jared', icon: UserRound }
+  { to: '/settings', label: 'Settings', icon: Settings }
 ];
 
 export function BottomNav() {
   return (
     <nav className="fixed inset-x-0 bottom-0 z-20 mx-auto max-w-md px-4 pb-4" aria-label="Primary navigation">
-      <div className="grid grid-cols-5 rounded-[1.75rem] border border-white/80 bg-white/86 p-2 shadow-card backdrop-blur-xl">
+      <div className="grid grid-cols-4 rounded-[1.75rem] border border-white/80 bg-white/86 p-2 shadow-card backdrop-blur-xl">
         {navItems.map((item) => (
           <NavLink
             className={({ isActive }) =>

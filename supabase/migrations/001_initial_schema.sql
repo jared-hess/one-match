@@ -39,8 +39,7 @@ create table if not exists public.jared_profiles (
   archived boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  constraint jared_profiles_display_name_jared check (display_name = 'Jared'),
-  constraint jared_profiles_active_archived_consistency check (active or archived)
+  constraint jared_profiles_not_active_when_archived check (not archived or active = false)
 );
 
 create table if not exists public.swipes (
@@ -100,13 +99,18 @@ create table if not exists public.jared_notes (
 create table if not exists public.deletion_requests (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
-  status text not null default 'requested' check (status in ('requested', 'completed')),
+  status text not null default 'requested' check (status in ('requested', 'completed', 'cancelled')),
   requested_at timestamptz not null default now(),
   completed_at timestamptz,
+  cancelled_at timestamptz,
   notes text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  constraint deletion_requests_completed_timestamp check (status <> 'completed' or completed_at is not null)
+  constraint deletion_requests_terminal_timestamp check (
+    (status = 'requested' and completed_at is null and cancelled_at is null)
+    or (status = 'completed' and completed_at is not null and cancelled_at is null)
+    or (status = 'cancelled' and cancelled_at is not null and completed_at is null)
+  )
 );
 
 create index if not exists profiles_user_id_idx on public.profiles(user_id);

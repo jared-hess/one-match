@@ -414,6 +414,8 @@ export function SettingsPage() {
 
     if (result.error) {
       setStatus(result.error.message);
+    } else if (result.demoMode) {
+      setStatus('Demo mode did not write a deletion request. End demo mode and sign in to submit one.');
     } else {
       setStatus('Deletion request submitted.');
       await load();

@@ -239,6 +239,22 @@ describe('App', () => {
     expect(screen.queryByRole('link', { name: /open inbound likes/i })).not.toBeInTheDocument();
   });
 
+  it('keeps normal settings behind auth when Supabase is unavailable', async () => {
+    render(<RouterProvider router={createTestRouter(['/settings'])} />);
+
+    expect(await screen.findByRole('heading', { name: /live datejared is waiting for supabase keys/i })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: /account and safety controls/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /request account deletion/i })).not.toBeInTheDocument();
+  });
+
+  it('keeps Jared settings deletion requests behind the existing guard when Supabase is unavailable', async () => {
+    render(<RouterProvider router={createTestRouter(['/jared/settings'])} />);
+
+    expect(await screen.findByRole('heading', { name: /live datejared is waiting for supabase keys/i })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: /workspace safety controls/i })).not.toBeInTheDocument();
+    expect(screen.queryByText(/deletion request/i)).not.toBeInTheDocument();
+  });
+
   it('keeps Jared private notes unreachable from normal routes', () => {
     render(<RouterProvider router={createTestRouter(['/'])} />);
 

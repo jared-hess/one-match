@@ -1,4 +1,4 @@
-package com.getcapacitor.myapp;
+package com.onematch.datejared;
 
 import static org.junit.Assert.*;
 

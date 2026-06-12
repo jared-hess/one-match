@@ -3,5 +3,5 @@
     <string name="app_name">DateJared</string>
     <string name="title_activity_main">DateJared</string>
     <string name="package_name">com.onematch.datejared</string>
-    <string name="custom_url_scheme">com.onematch.datejared</string>
+    <string name="custom_url_scheme">datejared</string>
 </resources>

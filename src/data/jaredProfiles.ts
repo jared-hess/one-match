@@ -9,7 +9,7 @@ const FALLBACK_TIMESTAMP = '2026-06-12T00:00:00.000Z';
 
 export const fallbackJaredProfiles: JaredProfile[] = [
   {
-    id: 'fallback-jared-dinner-conversation',
+    id: '5f3f4c7a-8a1b-4a0f-9f7a-9c2a6e1d1001',
     slug: 'jared-dinner-conversation',
     internal_label: 'Dinner / conversation Jared',
     display_name: 'Jared',
@@ -36,7 +36,7 @@ export const fallbackJaredProfiles: JaredProfile[] = [
     updated_at: FALLBACK_TIMESTAMP
   },
   {
-    id: 'fallback-jared-systems-software',
+    id: '5f3f4c7a-8a1b-4a0f-9f7a-9c2a6e1d1002',
     slug: 'jared-systems-software',
     internal_label: 'Systems / software Jared',
     display_name: 'Jared',
@@ -63,7 +63,7 @@ export const fallbackJaredProfiles: JaredProfile[] = [
     updated_at: FALLBACK_TIMESTAMP
   },
   {
-    id: 'fallback-jared-cooking-home',
+    id: '5f3f4c7a-8a1b-4a0f-9f7a-9c2a6e1d1003',
     slug: 'jared-cooking-home',
     internal_label: 'Cooking / home Jared',
     display_name: 'Jared',
@@ -90,7 +90,7 @@ export const fallbackJaredProfiles: JaredProfile[] = [
     updated_at: FALLBACK_TIMESTAMP
   },
   {
-    id: 'fallback-jared-fitness-routine',
+    id: '5f3f4c7a-8a1b-4a0f-9f7a-9c2a6e1d1004',
     slug: 'jared-fitness-routine',
     internal_label: 'Fitness / routine Jared',
     display_name: 'Jared',
@@ -117,7 +117,7 @@ export const fallbackJaredProfiles: JaredProfile[] = [
     updated_at: FALLBACK_TIMESTAMP
   },
   {
-    id: 'fallback-jared-coffee-planning',
+    id: '5f3f4c7a-8a1b-4a0f-9f7a-9c2a6e1d1005',
     slug: 'jared-coffee-planning',
     internal_label: 'Coffee / planning Jared',
     display_name: 'Jared',
@@ -144,7 +144,7 @@ export const fallbackJaredProfiles: JaredProfile[] = [
     updated_at: FALLBACK_TIMESTAMP
   },
   {
-    id: 'fallback-jared-parks-outdoors-ish',
+    id: '5f3f4c7a-8a1b-4a0f-9f7a-9c2a6e1d1006',
     slug: 'jared-parks-outdoors-ish',
     internal_label: 'Parks / outdoors-ish Jared',
     display_name: 'Jared',
@@ -171,7 +171,7 @@ export const fallbackJaredProfiles: JaredProfile[] = [
     updated_at: FALLBACK_TIMESTAMP
   },
   {
-    id: 'fallback-jared-sincere-romantic',
+    id: '5f3f4c7a-8a1b-4a0f-9f7a-9c2a6e1d1007',
     slug: 'jared-sincere-romantic',
     internal_label: 'Sincere / romantic Jared',
     display_name: 'Jared',
@@ -198,7 +198,7 @@ export const fallbackJaredProfiles: JaredProfile[] = [
     updated_at: FALLBACK_TIMESTAMP
   },
   {
-    id: 'fallback-jared-product-constrained-market',
+    id: '5f3f4c7a-8a1b-4a0f-9f7a-9c2a6e1d1008',
     slug: 'jared-product-constrained-market',
     internal_label: 'Product / constrained market Jared',
     display_name: 'Jared',
@@ -225,7 +225,7 @@ export const fallbackJaredProfiles: JaredProfile[] = [
     updated_at: FALLBACK_TIMESTAMP
   },
   {
-    id: 'fallback-jared-calendar-synced',
+    id: '5f3f4c7a-8a1b-4a0f-9f7a-9c2a6e1d1009',
     slug: 'jared-calendar-synced',
     internal_label: 'Calendar-synced Jared',
     display_name: 'Jared',
@@ -252,7 +252,7 @@ export const fallbackJaredProfiles: JaredProfile[] = [
     updated_at: FALLBACK_TIMESTAMP
   },
   {
-    id: 'fallback-jared-brings-a-layer',
+    id: '5f3f4c7a-8a1b-4a0f-9f7a-9c2a6e1d1010',
     slug: 'jared-brings-a-layer',
     internal_label: 'Brings-a-layer Jared',
     display_name: 'Jared',
@@ -279,7 +279,7 @@ export const fallbackJaredProfiles: JaredProfile[] = [
     updated_at: FALLBACK_TIMESTAMP
   },
   {
-    id: 'fallback-jared-replies-after-work',
+    id: '5f3f4c7a-8a1b-4a0f-9f7a-9c2a6e1d1011',
     slug: 'jared-replies-after-work',
     internal_label: 'Replies-after-work Jared',
     display_name: 'Jared',
@@ -306,7 +306,7 @@ export const fallbackJaredProfiles: JaredProfile[] = [
     updated_at: FALLBACK_TIMESTAMP
   },
   {
-    id: 'fallback-jared-saves-the-receipt',
+    id: '5f3f4c7a-8a1b-4a0f-9f7a-9c2a6e1d1012',
     slug: 'jared-saves-the-receipt',
     internal_label: 'Saves-the-receipt Jared',
     display_name: 'Jared',

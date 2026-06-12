@@ -3,6 +3,7 @@ import { getSupabase } from './supabase';
 import type { DemoAwareOptions, MutationResult, Swipe, SwipeDirection } from '../types';
 
 export const QUEUED_SWIPES_KEY = 'datejared:queued-swipes';
+export const LOCAL_SWIPES_KEY = 'datejared:local-swipes';
 export const VIEWED_COUNT_KEY = 'datejared:viewed-count';
 export const SIMILARITY_ACKNOWLEDGED_KEY = 'datejared:similarity-acknowledged';
 
@@ -11,6 +12,8 @@ export type QueuedSwipe = {
   direction: SwipeDirection;
   queuedAt: string;
 };
+
+export type LocalSwipe = QueuedSwipe;
 
 function readJson<T>(key: string, fallback: T): T {
   if (typeof window === 'undefined') {
@@ -37,6 +40,10 @@ export function getQueuedSwipes(): QueuedSwipe[] {
   return readJson<QueuedSwipe[]>(QUEUED_SWIPES_KEY, []);
 }
 
+export function getLocalSwipes(): LocalSwipe[] {
+  return readJson<LocalSwipe[]>(LOCAL_SWIPES_KEY, []);
+}
+
 export function getViewedCount(): number {
   return readJson<number>(VIEWED_COUNT_KEY, 0);
 }
@@ -53,18 +60,20 @@ export function recordAnonymousSwipe(jaredProfileId: string, direction: SwipeDir
   const viewedCount = getViewedCount() + 1;
   writeJson(VIEWED_COUNT_KEY, viewedCount);
 
+  const swipe = {
+    jaredProfileId,
+    direction,
+    queuedAt: new Date().toISOString()
+  };
+
+  const nextLocalSwipes = [...getLocalSwipes().filter((localSwipe) => localSwipe.jaredProfileId !== jaredProfileId), swipe];
+  writeJson(LOCAL_SWIPES_KEY, nextLocalSwipes);
+
   if (direction === 'left') {
     return getQueuedSwipes();
   }
 
-  const nextQueue = [
-    ...getQueuedSwipes().filter((swipe) => swipe.jaredProfileId !== jaredProfileId),
-    {
-      jaredProfileId,
-      direction,
-      queuedAt: new Date().toISOString()
-    }
-  ];
+  const nextQueue = [...getQueuedSwipes().filter((queuedSwipe) => queuedSwipe.jaredProfileId !== jaredProfileId), swipe];
   writeJson(QUEUED_SWIPES_KEY, nextQueue);
 
   return nextQueue;

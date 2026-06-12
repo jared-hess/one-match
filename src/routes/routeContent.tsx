@@ -12,6 +12,7 @@ import {
   ProfileDetailPage,
   SwipePage
 } from './NormalPages';
+import { JaredHomePage, JaredInboundDetailPage, JaredInboundPage, JaredMatchesPage, JaredSettingsPage } from './JaredPages';
 
 type RouteConfig = PlaceholderPageProps & {
   path: string;
@@ -130,7 +131,8 @@ export const jaredRouteConfigs: RouteConfig[] = [
     eyebrow: 'Jared workspace',
     title: 'A private control room for Jared.',
     description: 'The guarded Jared landing route is present without exposing workflows to normal users.',
-    note: 'Inbound review, decisions, CMS, messages, settings, and demo controls are only placeholders.'
+    note: 'Inbound review, decisions, CMS, messages, settings, and demo controls are only placeholders.',
+    element: <JaredHomePage />
   },
   {
     path: '/jared/inbound',
@@ -138,7 +140,8 @@ export const jaredRouteConfigs: RouteConfig[] = [
     eyebrow: 'Inbound',
     title: 'Inbound interest will queue here.',
     description: 'A guarded placeholder for Jared to review pending relationships.',
-    note: 'Task 6 owns the actual inbound business UI.'
+    note: 'Task 6 owns the actual inbound business UI.',
+    element: <JaredInboundPage />
   },
   {
     path: '/jared/inbound/:id',
@@ -146,7 +149,8 @@ export const jaredRouteConfigs: RouteConfig[] = [
     eyebrow: 'Inbound detail',
     title: 'A single inbound relationship route is reserved.',
     description: 'A guarded dynamic placeholder for reviewing one interested user.',
-    note: 'Relationship decision helpers exist in src/lib/relationships.ts; UI comes later.'
+    note: 'Relationship decision helpers exist in src/lib/relationships.ts; UI comes later.',
+    element: <JaredInboundDetailPage />
   },
   {
     path: '/jared/matches',
@@ -154,7 +158,8 @@ export const jaredRouteConfigs: RouteConfig[] = [
     eyebrow: 'Matches',
     title: 'Jared match management has a guarded path.',
     description: 'A placeholder for matched and archived relationship states.',
-    note: 'No match management table or workflow is implemented yet.'
+    note: 'No match management table or workflow is implemented yet.',
+    element: <JaredMatchesPage />
   },
   {
     path: '/jared/messages',
@@ -210,7 +215,8 @@ export const jaredRouteConfigs: RouteConfig[] = [
     eyebrow: 'Jared settings',
     title: 'Jared settings route is protected.',
     description: 'A placeholder for account-level controls specific to Jared.',
-    note: 'No settings forms are implemented yet.'
+    note: 'No settings forms are implemented yet.',
+    element: <JaredSettingsPage />
   }
 ];
 

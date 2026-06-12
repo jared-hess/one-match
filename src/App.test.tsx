@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { RouterProvider } from 'react-router-dom';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { fallbackJaredProfiles } from './data/jaredProfiles';
+import { addJaredNote, isProfileCompleteForJared, matchRelationshipBack } from './lib/relationships';
 import { getLocalSwipes, getQueuedSwipes, LOCAL_SWIPES_KEY, QUEUED_SWIPES_KEY, recordAnonymousSwipe, recordSwipe, VIEWED_COUNT_KEY } from './lib/swipes';
 import { getSupabaseAvailability } from './lib/supabase';
 import { createTestRouter } from './router';
@@ -80,12 +81,61 @@ describe('App', () => {
     }
   });
 
+  it('keeps Jared workspace routes behind the existing guard when Supabase is unavailable', async () => {
+    render(<RouterProvider router={createTestRouter(['/jared'])} />);
+
+    expect(await screen.findByRole('heading', { name: /live datejared is waiting for supabase keys/i })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: /private control room/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /open inbound likes/i })).not.toBeInTheDocument();
+  });
+
+  it('keeps Jared private notes unreachable from normal routes', () => {
+    render(<RouterProvider router={createTestRouter(['/'])} />);
+
+    expect(screen.queryByText(/private notes/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/inbound detail/i)).not.toBeInTheDocument();
+  });
+
   it('short-circuits swipe writes in demo mode', async () => {
     const result = await recordSwipe('jared-profile-id', 'right', { demoMode: true });
 
     expect(result.demoMode).toBe(true);
     expect(result.error).toBeNull();
     expect(result.data).toBeNull();
+  });
+
+  it('short-circuits Jared match-back and notes in demo/unavailable modes', async () => {
+    const matchResult = await matchRelationshipBack('relationship-id', { demoMode: true });
+    const noteResult = await addJaredNote('relationship-id', 'Remember the coffee context.');
+
+    expect(matchResult.demoMode).toBe(true);
+    expect(matchResult.error).toBeNull();
+    expect(matchResult.data).toEqual({ relationship: null, conversation: null });
+    expect(noteResult.demoMode).toBe(false);
+    expect(noteResult.error?.message).toMatch(/supabase is not configured/i);
+  });
+
+  it('evaluates Jared-visible profile completion without exposing it to normal screens', () => {
+    expect(
+      isProfileCompleteForJared({
+        id: 'profile-id',
+        user_id: 'user-id',
+        email: null,
+        role: 'user',
+        display_name: 'Ari',
+        city: 'Oakland',
+        bio: null,
+        looking_for: null,
+        good_first_date: null,
+        social_link: null,
+        photo_urls: [],
+        age_confirmed: true,
+        onboarding_completed_at: null,
+        created_at: '2026-06-12T00:00:00.000Z',
+        updated_at: '2026-06-12T00:00:00.000Z'
+      })
+    ).toBe(true);
+    expect(isProfileCompleteForJared(null)).toBe(false);
   });
 
   it('stores all anonymous swipes locally while queueing only right and super likes', () => {

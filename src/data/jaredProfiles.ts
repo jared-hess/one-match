@@ -177,11 +177,11 @@ export const fallbackJaredProfiles: JaredProfile[] = [
     display_name: 'Jared',
     age_label: '30-ish',
     location: 'Oakland',
-    bio: 'Sincere underneath several layers of dry delivery.',
+    bio: 'Sincere underneath a few layers of irony, and still trying to get more direct every season.',
     prompts: [
       {
         prompt: 'The way to my heart',
-        answer: 'Notice the effort, then let me make one dry line so we can both survive the sincerity.'
+        answer: 'Notice the effort, then meet me where sincerity is quiet and clear.'
       },
       {
         prompt: 'I value',
@@ -204,18 +204,18 @@ export const fallbackJaredProfiles: JaredProfile[] = [
     display_name: 'Jared',
     age_label: '30-ish',
     location: 'Oakland',
-    bio: 'Built a dating app with a constrained supply model. Hoping demand finds this charming rather than alarming.',
+    bio: 'I keep things clear, show up on time, and stay curious about what makes connection feel real.',
     prompts: [
       {
         prompt: 'My toxic trait',
-        answer: 'I describe obvious personal decisions as product constraints.'
+        answer: 'I over-explain small choices and then need to remember what matters in the moment.'
       },
       {
         prompt: 'Together we could',
-        answer: 'Validate whether scarcity is romantic or just a backlog issue.'
+        answer: 'Build a date around honesty, good conversation, and a plan that fits both of our lives.'
       }
     ],
-    tags: ['product', 'dating app', 'constrained supply', 'Oakland'],
+    tags: ['steady', 'honest', 'thoughtful', 'Oakland'],
     image_urls: ['/jared-profile-photos/product-constrained-market-1.jpg'],
     sort_order: 80,
     demo_eligible: true,

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { normalUserCopy } from '../../lib/normalDisplay';
+import { getNormalDisplayName, normalUserCopy } from '../../lib/normalDisplay';
 import type { JaredProfile } from '../../types';
 
 type SwipeCardProps = {
@@ -24,7 +24,7 @@ export function SwipeCard({ profile, isPeek = false }: SwipeCardProps) {
           Focused discovery
         </div>
         <h2 className="font-display text-5xl font-semibold leading-none tracking-[-0.05em]">
-          {profile.display_name}, {profile.age_label}
+          {getNormalDisplayName()}, {profile.age_label}
         </h2>
         <p className="mt-4 line-clamp-3 text-base leading-7 text-cream-50/86">{normalUserCopy(profile.bio)}</p>
         <div className="mt-5 flex flex-wrap gap-2">

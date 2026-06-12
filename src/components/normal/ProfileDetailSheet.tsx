@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { parseJaredPrompts } from '../../data/jaredProfiles';
-import { normalUserCopy } from '../../lib/normalDisplay';
+import { getNormalDisplayName, normalUserCopy } from '../../lib/normalDisplay';
 import type { JaredProfile } from '../../types';
 
 type ProfileDetailSheetProps = {
@@ -17,7 +17,7 @@ export function ProfileDetailSheet({ profile }: ProfileDetailSheetProps) {
         <div className="min-h-52 rounded-[1.35rem] bg-[radial-gradient(circle_at_25%_20%,rgba(255,212,200,0.8),transparent_34%),linear-gradient(145deg,rgba(244,111,100,0.4),rgba(42,28,34,0.94))] p-5">
           <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-cream-50/78">{profile.location}</p>
           <h1 className="mt-24 font-display text-5xl font-semibold leading-none tracking-[-0.05em]">
-            {profile.display_name}, {profile.age_label}
+            {getNormalDisplayName()}, {profile.age_label}
           </h1>
         </div>
       </div>

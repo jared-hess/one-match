@@ -4,10 +4,21 @@ import { InboundLikeCard } from '../components/jared/InboundLikeCard';
 import { InboundLikeDetail } from '../components/jared/InboundLikeDetail';
 import { JaredHome } from '../components/jared/JaredHome';
 import { RelationshipStatusBadge } from '../components/jared/RelationshipStatusBadge';
+import { ChatThread } from '../components/messages/ChatThread';
+import { ConversationList } from '../components/messages/ConversationList';
 import { PageShell } from '../components/PageShell';
 import { listAllJaredProfilesForJared } from '../lib/jaredProfiles';
+import {
+  fetchJaredMessagingConversation,
+  fetchJaredMessagingConversations,
+  fetchMessages,
+  markReceivedMessagesRead,
+  sendCurrentUserMessage,
+  subscribeToConversationMessages,
+  type MessagingConversation
+} from '../lib/messages';
 import { addJaredNote, decideRelationship, fetchJaredInboundContext, fetchJaredInboundContexts, matchRelationshipBack } from '../lib/relationships';
-import type { InboundRelationshipContext, JaredProfile, RelationshipStatus } from '../types';
+import type { InboundRelationshipContext, JaredProfile, Message, RelationshipStatus } from '../types';
 
 function useJaredContexts(status?: RelationshipStatus) {
   const [contexts, setContexts] = useState<InboundRelationshipContext[]>([]);
@@ -252,6 +263,189 @@ export function JaredMatchesPage() {
           </article>
         ))}
       </div>
+    </PageShell>
+  );
+}
+
+export function JaredMessagesPage() {
+  const [conversations, setConversations] = useState<MessagingConversation[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async (showLoading = true) => {
+    if (showLoading) {
+      setLoading(true);
+    }
+    setError(null);
+
+    try {
+      setConversations(await fetchJaredMessagingConversations());
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Unable to load Jared conversations.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+
+    fetchJaredMessagingConversations()
+      .then((nextConversations) => {
+        if (mounted) {
+          setConversations(nextConversations);
+        }
+      })
+      .catch((caught) => {
+        if (mounted) {
+          setError(caught instanceof Error ? caught.message : 'Unable to load Jared conversations.');
+        }
+      })
+      .finally(() => {
+        if (mounted) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  return (
+    <PageShell eyebrow="Jared messages" title="Reply only where the match is mutual." description="Jared sees open conversations created by the matched relationship contract—never pending likes or user-to-user threads.">
+      <div className="space-y-4">
+        {loading ? <EmptyJaredState title="Loading conversations" description="Checking open matched conversations." /> : null}
+        {error ? <EmptyJaredState title="Messages unavailable" description={error} /> : null}
+        <ConversationList basePath="/jared/messages" conversations={conversations} />
+        <button className="rounded-full border border-blush-100 bg-cream-50/80 px-4 py-2 text-sm font-extrabold text-blush-600" onClick={() => void load(false)} type="button">
+          Refresh inbox
+        </button>
+      </div>
+    </PageShell>
+  );
+}
+
+export function JaredMessagesDetailPage() {
+  const { id } = useParams();
+  const [conversation, setConversation] = useState<MessagingConversation | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [realtimeText, setRealtimeText] = useState('Refresh is available if live updates are unavailable.');
+
+  const load = useCallback(async (showLoading = true) => {
+    if (!id) {
+      setError('Missing conversation id.');
+      setLoading(false);
+      return;
+    }
+
+    if (showLoading) {
+      setLoading(true);
+    }
+    setError(null);
+
+    try {
+      const nextConversation = await fetchJaredMessagingConversation(id);
+      setConversation(nextConversation);
+      setMessages(nextConversation ? await fetchMessages(nextConversation.conversation.id) : []);
+      if (nextConversation) {
+        void markReceivedMessagesRead(nextConversation.conversation.id);
+      }
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Unable to load this conversation.');
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    if (!id) {
+      Promise.resolve().then(() => {
+        if (mounted) {
+          setError('Missing conversation id.');
+          setLoading(false);
+        }
+      });
+      return () => {
+        mounted = false;
+      };
+    }
+
+    fetchJaredMessagingConversation(id)
+      .then(async (nextConversation) => {
+        const nextMessages = nextConversation ? await fetchMessages(nextConversation.conversation.id) : [];
+        if (mounted) {
+          setConversation(nextConversation);
+          setMessages(nextMessages);
+        }
+        if (nextConversation) {
+          void markReceivedMessagesRead(nextConversation.conversation.id);
+        }
+      })
+      .catch((caught) => {
+        if (mounted) {
+          setError(caught instanceof Error ? caught.message : 'Unable to load this conversation.');
+        }
+      })
+      .finally(() => {
+        if (mounted) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [id]);
+
+  useEffect(() => {
+    if (!conversation) {
+      return;
+    }
+
+    const subscription = subscribeToConversationMessages(conversation.conversation.id, () => {
+      fetchMessages(conversation.conversation.id).then(setMessages).catch(() => setRealtimeText('Live update arrived, but refresh failed. Use Refresh to retry.'));
+    });
+    Promise.resolve().then(() => {
+      setRealtimeText(subscription.realtime ? 'Live updates are on for this conversation.' : `Live updates unavailable: ${subscription.reason}. Use Refresh to check for replies.`);
+    });
+
+    return subscription.unsubscribe;
+  }, [conversation]);
+
+  async function handleSend(body: string) {
+    if (!conversation) {
+      return;
+    }
+
+    const result = await sendCurrentUserMessage(conversation.conversation.id, body);
+    if (result.error) {
+      setError(result.error.message);
+      return;
+    }
+    await load(false);
+  }
+
+  return (
+    <PageShell eyebrow="Jared message detail" title="You and Jared matched" description="Jared replies only through the same matched/open conversation gate normal users use.">
+      {loading ? <EmptyJaredState title="Loading conversation" description="Checking relationship and conversation status before enabling replies." /> : null}
+      {error ? <EmptyJaredState title="Message thread unavailable" description={error} /> : null}
+      {!loading && !conversation ? <EmptyJaredState title="Start the conversation" description="No matched open conversation was found for this route." /> : null}
+      {conversation ? (
+        <ChatThread
+          conversation={conversation}
+          currentUserId={conversation.conversation.jared_user_id}
+          disabledReason="Jared replies only when the relationship is matched and the conversation is open."
+          messages={messages}
+          onRefresh={() => void load(false)}
+          onSend={handleSend}
+          statusText={realtimeText}
+        />
+      ) : null}
     </PageShell>
   );
 }

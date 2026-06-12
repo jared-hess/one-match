@@ -6,13 +6,14 @@ import {
   CompleteProfilePage,
   LandingPage,
   MatchPage,
+  MessagesPage,
   OnboardingPage,
   PendingPage,
   PreferencesPage,
   ProfileDetailPage,
   SwipePage
 } from './NormalPages';
-import { JaredHomePage, JaredInboundDetailPage, JaredInboundPage, JaredMatchesPage, JaredSettingsPage } from './JaredPages';
+import { JaredHomePage, JaredInboundDetailPage, JaredInboundPage, JaredMatchesPage, JaredMessagesDetailPage, JaredMessagesPage, JaredSettingsPage } from './JaredPages';
 
 type RouteConfig = PlaceholderPageProps & {
   path: string;
@@ -89,9 +90,10 @@ export const normalRouteConfigs: RouteConfig[] = [
     path: '/messages',
     guarded: 'auth',
     eyebrow: 'Messages',
-    title: 'Conversation routes are reserved.',
-    description: 'A protected placeholder for future matched messaging.',
-    note: 'Task 7 owns the real messaging UI and realtime behavior.'
+    title: 'You and Jared matched.',
+    description: 'Matched-only messaging for an open Jared conversation.',
+    note: 'Pending likes stay non-interactive; Realtime falls back to manual refresh.',
+    element: <MessagesPage />
   },
   {
     path: '/settings',
@@ -165,17 +167,19 @@ export const jaredRouteConfigs: RouteConfig[] = [
     path: '/jared/messages',
     guarded: 'jared',
     eyebrow: 'Jared messages',
-    title: 'Jared conversation routing exists.',
-    description: 'A guarded placeholder for Jared-side messaging.',
-    note: 'Task 7 owns full messaging and realtime UI.'
+    title: 'Jared message inbox.',
+    description: 'Open, matched conversations only.',
+    note: 'Pending and archived relationships never unlock replies.',
+    element: <JaredMessagesPage />
   },
   {
     path: '/jared/messages/:id',
     guarded: 'jared',
     eyebrow: 'Jared message detail',
-    title: 'A single conversation route is reserved.',
-    description: 'A guarded dynamic placeholder for one conversation.',
-    note: 'The id is displayed only to prove route mapping.'
+    title: 'Reply to a matched conversation.',
+    description: 'Jared can reply only through the gated data layer.',
+    note: 'Realtime falls back to refresh when unavailable.',
+    element: <JaredMessagesDetailPage />
   },
   {
     path: '/jared/profiles',

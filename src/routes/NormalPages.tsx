@@ -1,12 +1,21 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { ChatThread } from '../components/messages/ChatThread';
 import { MatchModal } from '../components/normal/MatchModal';
 import { PendingState } from '../components/normal/PendingState';
 import { ProfileDetailSheet } from '../components/normal/ProfileDetailSheet';
 import { ProfileForm } from '../components/normal/ProfileForm';
 import { SwipeDeck } from '../components/normal/SwipeDeck';
 import { getVisibleJaredProfile, listActiveJaredProfiles } from '../lib/jaredProfiles';
-import type { JaredProfile } from '../types';
+import {
+  fetchMessages,
+  fetchNormalMessagingState,
+  markReceivedMessagesRead,
+  sendCurrentUserMessage,
+  subscribeToConversationMessages,
+  type NormalMessagingState
+} from '../lib/messages';
+import type { JaredProfile, Message } from '../types';
 import { PageShell } from '../components/PageShell';
 
 export function LandingPage() {
@@ -149,4 +158,122 @@ export function PendingPage() {
 
 export function MatchPage() {
   return <MatchModal />;
+}
+
+export function MessagesPage() {
+  const [state, setState] = useState<NormalMessagingState | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [realtimeText, setRealtimeText] = useState('Refresh is available if live updates are unavailable.');
+
+  const load = useCallback(async (showLoading = true) => {
+    if (showLoading) {
+      setLoading(true);
+    }
+    setError(null);
+
+    try {
+      const nextState = await fetchNormalMessagingState();
+      setState(nextState);
+      setMessages(nextState.state === 'ready' ? nextState.messages : []);
+      if (nextState.state === 'ready') {
+        void markReceivedMessagesRead(nextState.item.conversation.id);
+      }
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Unable to load your conversation.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+
+    fetchNormalMessagingState()
+      .then((nextState) => {
+        if (mounted) {
+          setState(nextState);
+          setMessages(nextState.state === 'ready' ? nextState.messages : []);
+        }
+        if (nextState.state === 'ready') {
+          void markReceivedMessagesRead(nextState.item.conversation.id);
+        }
+      })
+      .catch((caught) => {
+        if (mounted) {
+          setError(caught instanceof Error ? caught.message : 'Unable to load your conversation.');
+        }
+      })
+      .finally(() => {
+        if (mounted) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (state?.state !== 'ready') {
+      return;
+    }
+
+    const subscription = subscribeToConversationMessages(state.item.conversation.id, () => {
+      fetchMessages(state.item.conversation.id).then(setMessages).catch(() => setRealtimeText('Live update arrived, but refresh failed. Use Refresh to retry.'));
+    });
+    Promise.resolve().then(() => {
+      setRealtimeText(subscription.realtime ? 'Live updates are on for this conversation.' : `Live updates unavailable: ${subscription.reason}. Use Refresh to check for replies.`);
+    });
+
+    return subscription.unsubscribe;
+  }, [state]);
+
+  const conversation = state?.state === 'ready' ? state.item : null;
+  const currentUserId = state?.currentUserId ?? null;
+  const blockedDescription = state?.state === 'blocked' ? state.description : 'Messaging opens only after You and Jared matched.';
+
+  async function handleSend(body: string) {
+    if (!conversation) {
+      return;
+    }
+
+    const result = await sendCurrentUserMessage(conversation.conversation.id, body);
+    if (result.error) {
+      setError(result.error.message);
+      return;
+    }
+    await load(false);
+  }
+
+  return (
+    <PageShell eyebrow="Messages" title="You and Jared matched" description="A private, matched-only thread. Pending likes and closed conversations stay non-interactive.">
+      {loading ? <p className="rounded-3xl border border-blush-100 bg-cream-50/80 p-4 text-sm text-ink-600">Loading your conversation.</p> : null}
+      {error ? <p className="mb-4 rounded-3xl border border-blush-100 bg-cream-50/80 p-4 text-sm font-bold text-merlot-900">{error}</p> : null}
+      {!loading && state?.state === 'blocked' ? (
+        <ChatThread
+          conversation={null}
+          currentUserId={currentUserId}
+          disabledReason={blockedDescription}
+          messages={[]}
+          onRefresh={() => void load(false)}
+          onSend={handleSend}
+          statusText={blockedDescription}
+        />
+      ) : null}
+      {conversation ? (
+        <ChatThread
+          conversation={conversation}
+          currentUserId={currentUserId}
+          disabledReason={blockedDescription}
+          messages={messages}
+          onRefresh={() => void load(false)}
+          onSend={handleSend}
+          statusText={realtimeText}
+        />
+      ) : null}
+    </PageShell>
+  );
 }

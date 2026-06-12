@@ -1,8 +1,9 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, RouterProvider } from 'react-router-dom';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { InboundLikeCard } from './components/jared/InboundLikeCard';
 import { InboundLikeDetail } from './components/jared/InboundLikeDetail';
+import { JaredProfileForm } from './components/jared/JaredProfileForm';
 import { JaredProfilePreview } from './components/jared/JaredProfilePreview';
 import { RelationshipStatusBadge } from './components/jared/RelationshipStatusBadge';
 import { ChatThread } from './components/messages/ChatThread';
@@ -14,7 +15,7 @@ import { getJaredProfilePhotoStoragePath, JARED_PROFILE_PHOTOS_BUCKET, uploadJar
 import { getLocalSwipes, getQueuedSwipes, LOCAL_SWIPES_KEY, QUEUED_SWIPES_KEY, recordAnonymousSwipe, recordSwipe, VIEWED_COUNT_KEY } from './lib/swipes';
 import { getSupabaseAvailability } from './lib/supabase';
 import { createTestRouter } from './router';
-import type { Conversation, InboundRelationshipContext, Message, Relationship } from './types';
+import type { Conversation, InboundRelationshipContext, JaredProfileInsert, JaredProfileUpdate, Message, Relationship } from './types';
 
 function createInboundContext(overrides: Partial<InboundRelationshipContext> = {}): InboundRelationshipContext {
   return {
@@ -286,6 +287,43 @@ describe('App', () => {
     expect(path).toBe('profile-123/12345.png');
     expect(result.demoMode).toBe(true);
     expect(result.error).toBeNull();
+  });
+
+  it('keeps profile form active and archived states mutually consistent before submit', async () => {
+    const submittedInputs: Array<JaredProfileInsert | JaredProfileUpdate> = [];
+    const onSubmit = vi.fn(async (input: JaredProfileInsert | JaredProfileUpdate) => {
+      submittedInputs.push(input);
+    });
+
+    render(
+      <MemoryRouter>
+        <JaredProfileForm onSubmit={onSubmit} profile={{ ...fallbackJaredProfiles[0], active: true, archived: false }} />
+      </MemoryRouter>
+    );
+
+    const activeToggle = screen.getByLabelText(/active in deck/i);
+    const archivedToggle = screen.getByLabelText(/archived/i);
+
+    expect(activeToggle).toBeChecked();
+    expect(archivedToggle).not.toBeChecked();
+
+    fireEvent.click(archivedToggle);
+    expect(activeToggle).not.toBeChecked();
+    expect(archivedToggle).toBeChecked();
+
+    fireEvent.click(screen.getByRole('button', { name: /save profile/i }));
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+    expect(submittedInputs[0]).toEqual(expect.objectContaining({ active: false, archived: true }));
+
+    fireEvent.click(activeToggle);
+    expect(activeToggle).toBeChecked();
+    expect(archivedToggle).not.toBeChecked();
+
+    fireEvent.click(screen.getByRole('button', { name: /save profile/i }));
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(2));
+    expect(submittedInputs[1]).toEqual(expect.objectContaining({ active: true, archived: false }));
   });
 
   it('reports unavailable safely for Jared profile creates without Supabase', async () => {

@@ -87,6 +87,22 @@ export function JaredProfileForm({ profile, onSubmit }: JaredProfileFormProps) {
     updateValue('tags', nextTagText.split(',').map((tag) => tag.trim()).filter(Boolean));
   }
 
+  function setActive(checked: boolean) {
+    setValues((current) => ({
+      ...current,
+      active: checked,
+      archived: checked ? false : current.archived
+    }));
+  }
+
+  function setArchived(checked: boolean) {
+    setValues((current) => ({
+      ...current,
+      active: checked ? false : current.active,
+      archived: checked
+    }));
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSaving(true);
@@ -130,9 +146,9 @@ export function JaredProfileForm({ profile, onSubmit }: JaredProfileFormProps) {
             <input className={fieldClassName} onChange={(event) => syncTags(event.target.value)} placeholder="Dinner, Oakland, movies" value={tagText} />
           </Field>
           <div className="mt-5 flex flex-wrap gap-3">
-            <Toggle checked={values.active} label="Active in deck" onChange={(checked) => updateValue('active', checked)} />
+            <Toggle checked={values.active} label="Active in deck" onChange={setActive} />
             <Toggle checked={values.demo_eligible} label="Demo eligible" onChange={(checked) => updateValue('demo_eligible', checked)} />
-            <Toggle checked={values.archived} label="Archived" onChange={(checked) => updateValue('archived', checked)} />
+            <Toggle checked={values.archived} label="Archived" onChange={setArchived} />
           </div>
         </section>
 

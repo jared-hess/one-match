@@ -4,12 +4,14 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { InboundLikeCard } from './components/jared/InboundLikeCard';
 import { InboundLikeDetail } from './components/jared/InboundLikeDetail';
 import { RelationshipStatusBadge } from './components/jared/RelationshipStatusBadge';
+import { ChatThread } from './components/messages/ChatThread';
 import { fallbackJaredProfiles } from './data/jaredProfiles';
+import { isMatchedOpenConversation, sendMessage } from './lib/messages';
 import { addJaredNote, isProfileCompleteForJared, matchRelationshipBack } from './lib/relationships';
 import { getLocalSwipes, getQueuedSwipes, LOCAL_SWIPES_KEY, QUEUED_SWIPES_KEY, recordAnonymousSwipe, recordSwipe, VIEWED_COUNT_KEY } from './lib/swipes';
 import { getSupabaseAvailability } from './lib/supabase';
 import { createTestRouter } from './router';
-import type { InboundRelationshipContext } from './types';
+import type { Conversation, InboundRelationshipContext, Message, Relationship } from './types';
 
 function createInboundContext(overrides: Partial<InboundRelationshipContext> = {}): InboundRelationshipContext {
   return {
@@ -48,6 +50,46 @@ function createInboundContext(overrides: Partial<InboundRelationshipContext> = {
     notes: [],
     conversation: null,
     latestMessage: null,
+    ...overrides
+  };
+}
+
+function createRelationship(overrides: Partial<Relationship> = {}): Relationship {
+  return {
+    id: 'relationship-id',
+    user_id: 'user-id',
+    jared_user_id: 'jared-user-id',
+    status: 'matched',
+    first_liked_profile_id: fallbackJaredProfiles[0].id,
+    latest_liked_profile_id: fallbackJaredProfiles[0].id,
+    decided_at: '2026-06-12T00:00:00.000Z',
+    created_at: '2026-06-12T00:00:00.000Z',
+    updated_at: '2026-06-12T00:00:00.000Z',
+    ...overrides
+  };
+}
+
+function createConversation(overrides: Partial<Conversation> = {}): Conversation {
+  return {
+    id: 'conversation-id',
+    relationship_id: 'relationship-id',
+    user_id: 'user-id',
+    jared_user_id: 'jared-user-id',
+    status: 'open',
+    created_at: '2026-06-12T00:00:00.000Z',
+    updated_at: '2026-06-12T00:00:00.000Z',
+    ...overrides
+  };
+}
+
+function createMessage(overrides: Partial<Message> = {}): Message {
+  return {
+    id: 'message-id',
+    conversation_id: 'conversation-id',
+    sender_id: 'user-id',
+    body: 'Hi Jared',
+    read_at: null,
+    created_at: '2026-06-12T00:00:00.000Z',
     ...overrides
   };
 }
@@ -213,6 +255,63 @@ describe('App', () => {
     expect(matchResult.data).toEqual({ relationship: null, conversation: null });
     expect(noteResult.demoMode).toBe(false);
     expect(noteResult.error?.message).toMatch(/supabase is not configured/i);
+  });
+
+  it('keeps pending message threads non-interactive and shows required empty copy', () => {
+    const pendingRelationship = createRelationship({ status: 'pending' });
+    const conversation = createConversation();
+
+    render(
+      <ChatThread
+        conversation={{ conversation, relationship: pendingRelationship, userProfile: null, latestMessage: null, unreadCount: 0 }}
+        currentUserId="user-id"
+        disabledReason="Messaging opens only after You and Jared matched."
+        messages={[]}
+        onRefresh={() => undefined}
+        onSend={async () => undefined}
+        statusText="Messaging opens only after You and Jared matched."
+      />
+    );
+
+    expect(screen.getAllByText(/start the conversation/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/you and jared matched/i).length).toBeGreaterThan(0);
+    expect(screen.getByPlaceholderText('Send a message...')).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Send' })).toBeDisabled();
+  });
+
+  it('allows matched open conversation helpers and rejects duplicate-prone mismatches', async () => {
+    const relationship = createRelationship();
+    const conversation = createConversation();
+
+    expect(isMatchedOpenConversation(relationship, conversation)).toBe(true);
+    expect(isMatchedOpenConversation(createRelationship({ status: 'pending' }), conversation)).toBe(false);
+    expect(isMatchedOpenConversation(relationship, createConversation({ status: 'archived' }))).toBe(false);
+    expect(isMatchedOpenConversation(relationship, createConversation({ relationship_id: 'different-relationship' }))).toBe(false);
+
+    const demoResult = await sendMessage(conversation.id, 'user-id', '  Hi Jared  ', { demoMode: true });
+    expect(demoResult.demoMode).toBe(true);
+    expect(demoResult.error).toBeNull();
+  });
+
+  it('aligns Jared replies opposite matched user messages', () => {
+    const relationship = createRelationship();
+    const conversation = createConversation();
+
+    render(
+      <ChatThread
+        conversation={{ conversation, relationship, userProfile: createInboundContext().userProfile, latestMessage: null, unreadCount: 0 }}
+        currentUserId="jared-user-id"
+        disabledReason="Jared replies only when matched and open."
+        messages={[createMessage(), createMessage({ id: 'jared-message-id', sender_id: 'jared-user-id', body: 'Hi Ari' })]}
+        onRefresh={() => undefined}
+        onSend={async () => undefined}
+        statusText="Live updates are on for this conversation."
+      />
+    );
+
+    expect(screen.getByText('Ari')).toBeInTheDocument();
+    expect(screen.getByText('You')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Send a message...')).toBeEnabled();
   });
 
   it('evaluates Jared-visible profile completion without exposing it to normal screens', () => {

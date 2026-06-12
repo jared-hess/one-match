@@ -690,41 +690,13 @@ export function JaredProfileEditPage() {
 }
 
 export function JaredDemoPage() {
-  const [profiles, setProfiles] = useState<JaredProfile[]>([]);
   const [demoState, setDemoState] = useState<JaredDemoState>(() => getJaredDemoState());
   const [stage, setStage] = useState<DemoStage>('launch');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [canShare, setCanShare] = useState(false);
   const [shareStatus, setShareStatus] = useState('Share is available when this device supports native or web sharing.');
 
-  const demoProfiles = buildJaredDemoDeck(profiles, demoState.deckSize);
-  const eligibleCount = getDemoEligibleJaredProfiles(profiles).length || getDemoEligibleJaredProfiles([]).length;
-
-  useEffect(() => {
-    let mounted = true;
-
-    listAllJaredProfilesForJared()
-      .then((nextProfiles) => {
-        if (mounted) {
-          setProfiles(nextProfiles);
-        }
-      })
-      .catch((caught) => {
-        if (mounted) {
-          setError(caught instanceof Error ? caught.message : 'Unable to load Jared demo profiles.');
-        }
-      })
-      .finally(() => {
-        if (mounted) {
-          setLoading(false);
-        }
-      });
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
+  const demoProfiles = buildJaredDemoDeck([], demoState.deckSize);
+  const eligibleCount = getDemoEligibleJaredProfiles([]).length;
 
   useEffect(() => {
     let mounted = true;
@@ -804,8 +776,6 @@ export function JaredDemoPage() {
 
   return (
     <div className="space-y-5">
-      {loading ? <EmptyJaredState title="Loading demo profiles" description="Checking Jared profile rows before falling back to local demo seed data." /> : null}
-      {error ? <EmptyJaredState title="Demo profiles fallback active" description={error} /> : null}
       {stage === 'launch' ? (
         <DemoLauncher availableProfiles={eligibleCount} deckSize={demoState.deckSize} onDeckSizeChange={handleDeckSizeChange} onStart={handleStart} />
       ) : (

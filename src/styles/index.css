@@ -1,0 +1,42 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-cream-50: 255 247 242;
+  --color-blush-50: 255 237 231;
+  --color-blush-100: 255 212 200;
+  --color-blush-500: 244 111 100;
+  --color-blush-600: 211 77 77;
+  --color-merlot-900: 122 35 50;
+  --color-ink-900: 42 28 34;
+  --color-ink-600: 102 82 91;
+  color-scheme: light;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: rgb(var(--color-cream-50));
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}

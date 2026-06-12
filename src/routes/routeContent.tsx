@@ -241,9 +241,9 @@ export const jaredRouteConfigs: RouteConfig[] = [
     path: '/jared/settings',
     guarded: 'jared',
     eyebrow: 'Jared settings',
-    title: 'Jared settings route is protected.',
-    description: 'A placeholder for account-level controls specific to Jared.',
-    note: 'No settings forms are implemented yet.',
+    title: 'Workspace safety controls.',
+    description: 'Guarded Jared controls for reviewing account deletion requests.',
+    note: 'Deletion request statuses stay limited to requested, completed, and cancelled.',
     element: <JaredSettingsPage />
   }
 ];

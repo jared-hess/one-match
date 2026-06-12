@@ -854,6 +854,11 @@ export function JaredSettingsPage() {
       return;
     }
 
+    if (result.demoMode) {
+      setStatus('Demo mode did not update the deletion request. End demo mode before changing request status.');
+      return;
+    }
+
     setStatus(`Deletion request marked ${nextStatus}.`);
     await load();
   }

@@ -113,6 +113,27 @@ describe('own data access', () => {
     });
   });
 
+  it('does not call deletion RPC when the current user is signed out', async () => {
+    const rpc = vi.fn();
+    const getUser = vi.fn().mockResolvedValue({ data: { user: null }, error: null });
+
+    mockGetSupabase.mockReturnValue({
+      available: true,
+      client: {
+        auth: { getUser },
+        rpc
+      },
+      url: 'https://example.supabase.co'
+    });
+
+    await expect(createOwnDeletionRequest()).resolves.toMatchObject({
+      data: null,
+      demoMode: false
+    });
+    expect(getUser).toHaveBeenCalledTimes(1);
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
   it('filters own deletion request list by the authenticated user id', async () => {
     const order = vi.fn().mockResolvedValue({ data: [], error: null });
     const eq = vi.fn().mockReturnValue({ order });

@@ -181,7 +181,7 @@ export const fallbackJaredProfiles: JaredProfile[] = [
     prompts: [
       {
         prompt: 'The way to my heart',
-        answer: 'Notice the effort, then let me make one joke so we can both survive the sincerity.'
+        answer: 'Notice the effort, then let me make one dry line so we can both survive the sincerity.'
       },
       {
         prompt: 'I value',

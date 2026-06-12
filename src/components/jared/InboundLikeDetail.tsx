@@ -19,8 +19,9 @@ function formatDateTime(value: string | null): string {
 }
 
 export function InboundLikeDetail({ context, decisionStatus, onDecide, onAddNote }: InboundLikeDetailProps) {
-  const { relationship, userProfile, likedProfiles, firstLikedProfile, latestLikedProfile, latestMessage, conversation } = context;
+  const { relationship, userProfile, likedProfiles, passedProfiles, firstLikedProfile, latestLikedProfile, latestMessage, conversation } = context;
   const displayName = userProfile?.display_name?.trim() || 'Unknown user';
+  const photoUrl = userProfile?.photo_urls[0];
 
   return (
     <div className="space-y-5">
@@ -28,9 +29,16 @@ export function InboundLikeDetail({ context, decisionStatus, onDecide, onAddNote
         <div className="bg-[radial-gradient(circle_at_25%_15%,rgba(255,212,200,0.82),transparent_34%),linear-gradient(145deg,rgba(244,111,100,0.34),rgba(42,28,34,0.96))] p-6">
           <div className="flex items-start justify-between gap-3">
             <p className="text-xs font-extrabold uppercase tracking-[0.24em] text-cream-50/78">Inbound detail</p>
-            <RelationshipStatusBadge status={relationship.status} />
+            <RelationshipStatusBadge status={relationship.status} tone="dark" />
           </div>
-          <h1 className="mt-24 font-display text-5xl font-semibold leading-none tracking-[-0.05em]">{displayName}</h1>
+          {photoUrl ? (
+            <img alt={`${displayName} profile`} className="mt-12 h-28 w-28 rounded-[2rem] object-cover shadow-card" src={photoUrl} />
+          ) : (
+            <div className="mt-12 flex h-28 w-28 items-center justify-center rounded-[2rem] border border-white/45 bg-white/12 p-3 text-center text-xs font-extrabold uppercase leading-4 tracking-[0.16em] text-cream-50/86">
+              No photo shared
+            </div>
+          )}
+          <h1 className="mt-6 font-display text-5xl font-semibold leading-none tracking-[-0.05em]">{displayName}</h1>
           <p className="mt-3 text-sm font-semibold text-cream-50/82">{userProfile?.city ?? 'City not shared'} · {isProfileCompleteForJared(userProfile) ? 'Complete profile' : 'Incomplete profile'}</p>
         </div>
         <div className="grid gap-3 p-5 text-sm leading-6 text-cream-50/86">
@@ -53,7 +61,11 @@ export function InboundLikeDetail({ context, decisionStatus, onDecide, onAddNote
           </div>
           <div className="rounded-3xl border border-blush-100 bg-cream-50/80 p-4">
             <dt className="font-bold text-ink-900">Profile context</dt>
-            <dd>{likedProfiles.map((profile) => profile.internal_label).join(', ') || 'No profile labels available.'}</dd>
+            <dd>
+              Liked: {likedProfiles.map((profile) => profile.internal_label).join(', ') || 'No liked profile labels available.'}
+              <br />
+              Passed: {passedProfiles.map((profile) => profile.internal_label).join(', ') || 'No passed profile labels available.'}
+            </dd>
           </div>
           <div className="rounded-3xl border border-blush-100 bg-cream-50/80 p-4">
             <dt className="font-bold text-ink-900">Timestamps</dt>

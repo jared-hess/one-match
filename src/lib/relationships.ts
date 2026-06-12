@@ -76,6 +76,10 @@ function isLikedSwipe(swipe: Swipe): boolean {
   return swipe.direction === 'right' || swipe.direction === 'super';
 }
 
+function isPassedSwipe(swipe: Swipe): boolean {
+  return swipe.direction === 'left';
+}
+
 async function fetchProfilesByUserIds(userIds: string[]): Promise<Profile[]> {
   if (!userIds.length) {
     return [];
@@ -116,7 +120,7 @@ async function fetchJaredProfilesByIds(profileIds: string[]): Promise<JaredProfi
   return data ?? [];
 }
 
-async function fetchLikedSwipesForUsers(userIds: string[]): Promise<Swipe[]> {
+async function fetchReviewSwipesForUsers(userIds: string[]): Promise<Swipe[]> {
   if (!userIds.length) {
     return [];
   }
@@ -131,14 +135,13 @@ async function fetchLikedSwipesForUsers(userIds: string[]): Promise<Swipe[]> {
     .from('swipes')
     .select('*')
     .in('user_id', userIds)
-    .in('direction', ['right', 'super'])
     .order('created_at', { ascending: true });
 
   if (error) {
     throw error;
   }
 
-  return (data ?? []).filter(isLikedSwipe);
+  return data ?? [];
 }
 
 async function fetchNotesForRelationships(relationshipIds: string[]): Promise<JaredNote[]> {
@@ -227,12 +230,12 @@ export async function fetchJaredInboundContexts(status?: RelationshipStatus): Pr
 
   const [profiles, swipes, notes, conversations] = await Promise.all([
     fetchProfilesByUserIds(userIds),
-    fetchLikedSwipesForUsers(userIds),
+    fetchReviewSwipesForUsers(userIds),
     fetchNotesForRelationships(relationshipIds),
     fetchConversationsForRelationships(relationshipIds)
   ]);
-  const allLikedProfileIds = uniqueValues([...directProfileIds, ...swipes.map((swipe) => swipe.jared_profile_id)]);
-  const jaredProfiles = await fetchJaredProfilesByIds(allLikedProfileIds);
+  const allReviewProfileIds = uniqueValues([...directProfileIds, ...swipes.map((swipe) => swipe.jared_profile_id)]);
+  const jaredProfiles = await fetchJaredProfilesByIds(allReviewProfileIds);
   const latestMessages = await fetchLatestMessagesForConversations(conversations.map((conversation) => conversation.id));
 
   const profilesByUserId = new Map(profiles.map((profile) => [profile.user_id, profile]));
@@ -257,17 +260,23 @@ export async function fetchJaredInboundContexts(status?: RelationshipStatus): Pr
   });
 
   return relationships.map((relationship) => {
+    const userSwipes = swipesByUserId.get(relationship.user_id) ?? [];
     const likedProfileIds = uniqueValues([
       relationship.first_liked_profile_id,
-      ...(swipesByUserId.get(relationship.user_id) ?? []).map((swipe) => swipe.jared_profile_id),
+      ...userSwipes.filter(isLikedSwipe).map((swipe) => swipe.jared_profile_id),
       relationship.latest_liked_profile_id
     ]);
+    const passedProfileIds = uniqueValues(userSwipes.filter(isPassedSwipe).map((swipe) => swipe.jared_profile_id));
     const conversation = conversationByRelationshipId.get(relationship.id) ?? null;
 
     return {
       relationship,
       userProfile: profilesByUserId.get(relationship.user_id) ?? null,
       likedProfiles: likedProfileIds.flatMap((profileId) => {
+        const profile = jaredProfileById.get(profileId);
+        return profile ? [profile] : [];
+      }),
+      passedProfiles: passedProfileIds.flatMap((profileId) => {
         const profile = jaredProfileById.get(profileId);
         return profile ? [profile] : [];
       }),

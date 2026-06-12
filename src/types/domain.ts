@@ -112,6 +112,7 @@ export type InboundRelationshipContext = {
   relationship: Relationship;
   userProfile: Profile | null;
   likedProfiles: JaredProfile[];
+  passedProfiles: JaredProfile[];
   firstLikedProfile: JaredProfile | null;
   latestLikedProfile: JaredProfile | null;
   notes: JaredNote[];

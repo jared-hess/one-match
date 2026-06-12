@@ -19,11 +19,19 @@ export function InboundLikeCard({ context }: InboundLikeCardProps) {
   const { relationship, userProfile, likedProfiles, firstLikedProfile, latestLikedProfile, notes } = context;
   const displayName = userProfile?.display_name?.trim() || 'Unknown user';
   const city = userProfile?.city?.trim() || 'City not shared';
+  const photoUrl = userProfile?.photo_urls[0];
 
   return (
     <article className="rounded-app border border-white/80 bg-white/84 p-5 shadow-card backdrop-blur-xl">
-      <div className="flex items-start justify-between gap-3">
-        <div>
+      <div className="flex items-start gap-4">
+        {photoUrl ? (
+          <img alt={`${displayName} profile`} className="h-16 w-16 rounded-3xl object-cover shadow-card" src={photoUrl} />
+        ) : (
+          <div className="flex h-16 w-16 items-center justify-center rounded-3xl border border-blush-100 bg-cream-50/80 p-2 text-center text-[0.62rem] font-extrabold uppercase leading-3 tracking-[0.14em] text-ink-600">
+            No photo shared
+          </div>
+        )}
+        <div className="min-w-0 flex-1">
           <p className="text-xs font-extrabold uppercase tracking-[0.24em] text-blush-600">Liked {formatDate(relationship.created_at)}</p>
           <h2 className="mt-2 font-display text-3xl font-semibold leading-none tracking-[-0.04em] text-merlot-900">{displayName}</h2>
           <p className="mt-2 text-sm font-semibold text-ink-600">{city}</p>

@@ -1,11 +1,56 @@
 import { render, screen } from '@testing-library/react';
-import { RouterProvider } from 'react-router-dom';
+import { MemoryRouter, RouterProvider } from 'react-router-dom';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { InboundLikeCard } from './components/jared/InboundLikeCard';
+import { InboundLikeDetail } from './components/jared/InboundLikeDetail';
+import { RelationshipStatusBadge } from './components/jared/RelationshipStatusBadge';
 import { fallbackJaredProfiles } from './data/jaredProfiles';
 import { addJaredNote, isProfileCompleteForJared, matchRelationshipBack } from './lib/relationships';
 import { getLocalSwipes, getQueuedSwipes, LOCAL_SWIPES_KEY, QUEUED_SWIPES_KEY, recordAnonymousSwipe, recordSwipe, VIEWED_COUNT_KEY } from './lib/swipes';
 import { getSupabaseAvailability } from './lib/supabase';
 import { createTestRouter } from './router';
+import type { InboundRelationshipContext } from './types';
+
+function createInboundContext(overrides: Partial<InboundRelationshipContext> = {}): InboundRelationshipContext {
+  return {
+    relationship: {
+      id: 'relationship-id',
+      user_id: 'user-id',
+      jared_user_id: 'jared-user-id',
+      status: 'pending',
+      first_liked_profile_id: fallbackJaredProfiles[0].id,
+      latest_liked_profile_id: fallbackJaredProfiles[1].id,
+      decided_at: null,
+      created_at: '2026-06-12T00:00:00.000Z',
+      updated_at: '2026-06-12T00:00:00.000Z'
+    },
+    userProfile: {
+      id: 'profile-id',
+      user_id: 'user-id',
+      email: null,
+      role: 'user',
+      display_name: 'Ari',
+      city: 'Oakland',
+      bio: 'Likes unhurried coffee.',
+      looking_for: 'Warm conversation',
+      good_first_date: 'A small table near a window',
+      social_link: null,
+      photo_urls: [],
+      age_confirmed: true,
+      onboarding_completed_at: null,
+      created_at: '2026-06-12T00:00:00.000Z',
+      updated_at: '2026-06-12T00:00:00.000Z'
+    },
+    likedProfiles: [fallbackJaredProfiles[0], fallbackJaredProfiles[1]],
+    passedProfiles: [fallbackJaredProfiles[2]],
+    firstLikedProfile: fallbackJaredProfiles[0],
+    latestLikedProfile: fallbackJaredProfiles[1],
+    notes: [],
+    conversation: null,
+    latestMessage: null,
+    ...overrides
+  };
+}
 
 describe('App', () => {
   beforeEach(() => {
@@ -94,6 +139,61 @@ describe('App', () => {
 
     expect(screen.queryByText(/private notes/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/inbound detail/i)).not.toBeInTheDocument();
+  });
+
+  it('shows Jared inbound user photo context and no-photo fallback without changing liked counts', () => {
+    const contextWithPhoto = createInboundContext({
+      userProfile: {
+        ...createInboundContext().userProfile!,
+        photo_urls: ['/user-photo.jpg']
+      }
+    });
+
+    const { rerender } = render(
+      <MemoryRouter>
+        <InboundLikeCard context={contextWithPhoto} />
+      </MemoryRouter>
+    );
+
+    expect(screen.getByAltText(/ari profile/i)).toHaveAttribute('src', '/user-photo.jpg');
+    expect(screen.getByText('2')).toBeInTheDocument();
+
+    rerender(
+      <MemoryRouter>
+        <InboundLikeCard context={createInboundContext()} />
+      </MemoryRouter>
+    );
+
+    expect(screen.getByText(/no photo shared/i)).toBeInTheDocument();
+    expect(screen.getByText('2')).toBeInTheDocument();
+  });
+
+  it('shows liked and passed Jared profile labels in inbound detail only', () => {
+    render(
+      <InboundLikeDetail
+        context={createInboundContext()}
+        decisionStatus="Choose a decision."
+        onAddNote={async () => null}
+        onDecide={async () => undefined}
+      />
+    );
+
+    expect(screen.getByText(/liked: dinner \/ conversation jared, systems \/ software jared/i)).toBeInTheDocument();
+    expect(screen.getByText(/passed: cooking \/ home jared/i)).toBeInTheDocument();
+    expect(screen.getByText(/no photo shared/i)).toBeInTheDocument();
+  });
+
+  it('renders matched badges with readable light and dark variants', () => {
+    render(
+      <div>
+        <RelationshipStatusBadge status="matched" />
+        <RelationshipStatusBadge status="matched" tone="dark" />
+      </div>
+    );
+
+    const badges = screen.getAllByText('Matched');
+    expect(badges[0]).toHaveClass('text-merlot-900');
+    expect(badges[1]).toHaveClass('text-cream-50');
   });
 
   it('short-circuits swipe writes in demo mode', async () => {

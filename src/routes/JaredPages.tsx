@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { DemoLauncher } from '../components/demo/DemoLauncher';
+import { DemoSwipeFlow } from '../components/demo/DemoSwipeFlow';
 import { InboundLikeCard } from '../components/jared/InboundLikeCard';
 import { InboundLikeDetail } from '../components/jared/InboundLikeDetail';
 import { JaredHome } from '../components/jared/JaredHome';
@@ -9,6 +11,15 @@ import { RelationshipStatusBadge } from '../components/jared/RelationshipStatusB
 import { ChatThread } from '../components/messages/ChatThread';
 import { ConversationList } from '../components/messages/ConversationList';
 import { PageShell } from '../components/PageShell';
+import {
+  buildJaredDemoDeck,
+  DEMO_DECK_SIZES,
+  getDemoEligibleJaredProfiles,
+  getJaredDemoState,
+  resetJaredDemoState,
+  type DemoDeckSize,
+  type JaredDemoState
+} from '../lib/demoMode';
 import {
   archiveJaredProfile,
   createJaredProfile,
@@ -28,6 +39,8 @@ import {
 } from '../lib/messages';
 import { addJaredNote, decideRelationship, fetchJaredInboundContext, fetchJaredInboundContexts, matchRelationshipBack } from '../lib/relationships';
 import type { InboundRelationshipContext, JaredProfile, JaredProfileInsert, JaredProfileUpdate, Message, RelationshipStatus } from '../types';
+
+type DemoStage = 'launch' | 'swiping' | 'complete';
 
 function useJaredContexts(status?: RelationshipStatus) {
   const [contexts, setContexts] = useState<InboundRelationshipContext[]>([]);
@@ -671,6 +684,140 @@ export function JaredProfileEditPage() {
       {!loading && !profile ? <EmptyJaredState title="Profile not found" description="No Jared profile matched this id or slug." /> : null}
       {profile ? <JaredProfileForm onSubmit={handleUpdate} profile={profile} /> : null}
     </PageShell>
+  );
+}
+
+export function JaredDemoPage() {
+  const [profiles, setProfiles] = useState<JaredProfile[]>([]);
+  const [demoState, setDemoState] = useState<JaredDemoState>(() => getJaredDemoState());
+  const [stage, setStage] = useState<DemoStage>('launch');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [canShare, setCanShare] = useState(false);
+  const [shareStatus, setShareStatus] = useState('Share is available when this device supports native or web sharing.');
+
+  const demoProfiles = buildJaredDemoDeck(profiles, demoState.deckSize);
+  const eligibleCount = getDemoEligibleJaredProfiles(profiles).length || getDemoEligibleJaredProfiles([]).length;
+
+  useEffect(() => {
+    let mounted = true;
+
+    listAllJaredProfilesForJared()
+      .then((nextProfiles) => {
+        if (mounted) {
+          setProfiles(nextProfiles);
+        }
+      })
+      .catch((caught) => {
+        if (mounted) {
+          setError(caught instanceof Error ? caught.message : 'Unable to load Jared demo profiles.');
+        }
+      })
+      .finally(() => {
+        if (mounted) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function detectShareCapability() {
+      if (typeof navigator !== 'undefined' && 'share' in navigator) {
+        setCanShare(true);
+        setShareStatus('Share Link is ready for web share.');
+        return;
+      }
+
+      try {
+        const { Share } = await import('@capacitor/share');
+        const result = await Share.canShare();
+        if (mounted && result.value) {
+          setCanShare(true);
+          setShareStatus('Share Link is ready for Capacitor Share.');
+        }
+      } catch {
+        if (mounted) {
+          setShareStatus('Share Link is unavailable in this browser. Copy /jared/demo manually if needed.');
+        }
+      }
+    }
+
+    void detectShareCapability();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  function handleDeckSizeChange(deckSize: DemoDeckSize) {
+    const nextState = resetJaredDemoState(deckSize);
+    setDemoState(nextState);
+    setStage('launch');
+  }
+
+  function handleStart() {
+    const nextState = resetJaredDemoState(demoState.deckSize);
+    setDemoState(nextState);
+    setStage('swiping');
+  }
+
+  function handleEndDemo() {
+    const nextState = resetJaredDemoState(demoState.deckSize);
+    setDemoState(nextState);
+    setStage('launch');
+  }
+
+  async function handleShare() {
+    const url = typeof window === 'undefined' ? '/jared/demo' : `${window.location.origin}/jared/demo`;
+    const shareData = {
+      title: 'DateJared demo',
+      text: 'Open the guarded local-only DateJared demo.',
+      url
+    };
+
+    try {
+      if (typeof navigator !== 'undefined' && 'share' in navigator) {
+        await navigator.share(shareData);
+        setShareStatus('Demo link shared.');
+        return;
+      }
+
+      const { Share } = await import('@capacitor/share');
+      await Share.share(shareData);
+      setShareStatus('Demo link shared.');
+    } catch {
+      setShareStatus('Share was cancelled or unavailable. No demo data was written.');
+    }
+  }
+
+  if (stage === 'complete') {
+    return <DemoSwipeFlow canShare={canShare} onComplete={() => undefined} onEndDemo={handleEndDemo} onShare={() => void handleShare()} profiles={[]} shareStatus={shareStatus} state={demoState} />;
+  }
+
+  return (
+    <div className="space-y-5">
+      {loading ? <EmptyJaredState title="Loading demo profiles" description="Checking Jared profile rows before falling back to local demo seed data." /> : null}
+      {error ? <EmptyJaredState title="Demo profiles fallback active" description={error} /> : null}
+      {stage === 'launch' ? (
+        <DemoLauncher availableProfiles={eligibleCount} deckSize={demoState.deckSize} onDeckSizeChange={handleDeckSizeChange} onStart={handleStart} />
+      ) : (
+        <DemoSwipeFlow
+          canShare={canShare}
+          onComplete={() => setStage('complete')}
+          onEndDemo={handleEndDemo}
+          onShare={() => void handleShare()}
+          profiles={demoProfiles.length ? demoProfiles : buildJaredDemoDeck([], DEMO_DECK_SIZES[0])}
+          shareStatus={shareStatus}
+          state={demoState}
+        />
+      )}
+    </div>
   );
 }
 

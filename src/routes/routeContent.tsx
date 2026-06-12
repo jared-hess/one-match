@@ -14,6 +14,7 @@ import {
   SwipePage
 } from './NormalPages';
 import {
+  JaredDemoPage,
   JaredHomePage,
   JaredInboundDetailPage,
   JaredInboundPage,
@@ -224,8 +225,9 @@ export const jaredRouteConfigs: RouteConfig[] = [
     guarded: 'jared',
     eyebrow: 'Demo',
     title: 'Demo mode has a guarded destination.',
-    description: 'A placeholder for local-only demo flow controls.',
-    note: 'Task 9 owns the demo experience; this task only provides write guards.'
+    description: 'A local-only demo flow for Jared.',
+    note: 'Demo state stays isolated from normal swipe queues.',
+    element: <JaredDemoPage />
   },
   {
     path: '/jared/settings',

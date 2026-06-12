@@ -11,7 +11,15 @@ import { JaredProfilePreview } from './components/jared/JaredProfilePreview';
 import { RelationshipStatusBadge } from './components/jared/RelationshipStatusBadge';
 import { ChatThread } from './components/messages/ChatThread';
 import { fallbackJaredProfiles } from './data/jaredProfiles';
-import { buildJaredDemoDeck, getJaredDemoState, JARED_DEMO_STATE_KEY, resetJaredDemoState } from './lib/demoMode';
+import {
+  buildJaredDemoDeck,
+  DEMO_MODE_STORAGE_KEY,
+  endJaredDemoMode,
+  getJaredDemoState,
+  isDemoModeEnabled,
+  JARED_DEMO_STATE_KEY,
+  resetJaredDemoState
+} from './lib/demoMode';
 import { createJaredProfile } from './lib/jaredProfiles';
 import { isMatchedOpenConversation, sendMessage } from './lib/messages';
 import { addJaredNote, isProfileCompleteForJared, matchRelationshipBack } from './lib/relationships';
@@ -482,6 +490,31 @@ describe('App', () => {
     expect(window.localStorage.getItem(VIEWED_COUNT_KEY)).toBeNull();
   });
 
+  it('enables demo mode for reset but disables global no-write mode when ended', () => {
+    resetJaredDemoState(10);
+
+    expect(isDemoModeEnabled()).toBe(true);
+    expect(window.localStorage.getItem(DEMO_MODE_STORAGE_KEY)).toBe('true');
+    expect(window.localStorage.getItem(JARED_DEMO_STATE_KEY)).not.toBeNull();
+
+    const endedState = endJaredDemoMode();
+
+    expect(endedState.deckSize).toBe(5);
+    expect(isDemoModeEnabled()).toBe(false);
+    expect(window.localStorage.getItem(DEMO_MODE_STORAGE_KEY)).toBe('false');
+    expect(window.localStorage.getItem(JARED_DEMO_STATE_KEY)).toBeNull();
+  });
+
+  it('does not silently force normal mutations into demo mode after End Demo', async () => {
+    resetJaredDemoState(5);
+    endJaredDemoMode();
+
+    const result = await recordSwipe('jared-profile-id', 'right');
+
+    expect(result.demoMode).toBe(false);
+    expect(result.error?.message).toMatch(/supabase is not configured/i);
+  });
+
   it('renders deck size choices and resets local demo state instantly', () => {
     const onDeckSizeChange = vi.fn((deckSize) => resetJaredDemoState(deckSize));
 
@@ -518,6 +551,21 @@ describe('App', () => {
     expect(screen.getByRole('link', { name: /open public app/i })).toHaveAttribute('href', '/');
     expect(screen.getByRole('button', { name: /share link/i })).toBeDisabled();
     expect(screen.getByRole('status')).toHaveTextContent(/unavailable/i);
+  });
+
+  it('runs the End Demo completion action and clears global demo mode', () => {
+    resetJaredDemoState(7);
+
+    render(
+      <MemoryRouter>
+        <DemoCompletionScreen canShare={false} onEndDemo={endJaredDemoMode} onShare={() => undefined} shareStatus="Share Link is unavailable in this browser." />
+      </MemoryRouter>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /end demo/i }));
+
+    expect(isDemoModeEnabled()).toBe(false);
+    expect(window.localStorage.getItem(JARED_DEMO_STATE_KEY)).toBeNull();
   });
 
   it('reveals candidate similarity after exactly two demo card views without normal queue writes', async () => {

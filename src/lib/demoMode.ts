@@ -95,6 +95,14 @@ function writeJson<T>(key: string, value: T): void {
   window.localStorage.setItem(key, JSON.stringify(value));
 }
 
+function removeItem(key: string): void {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  window.localStorage.removeItem(key);
+}
+
 export function getJaredDemoState(): JaredDemoState {
   const state = readJson<JaredDemoState>(JARED_DEMO_STATE_KEY, defaultDemoState());
   const deckSize = isDemoDeckSize(state.deckSize) ? state.deckSize : 5;
@@ -112,6 +120,12 @@ export function resetJaredDemoState(deckSize: DemoDeckSize): JaredDemoState {
   setDemoModeEnabled(true);
   writeJson(JARED_DEMO_STATE_KEY, nextState);
   return nextState;
+}
+
+export function endJaredDemoMode(): JaredDemoState {
+  setDemoModeEnabled(false);
+  removeItem(JARED_DEMO_STATE_KEY);
+  return defaultDemoState();
 }
 
 export function recordJaredDemoSwipe(jaredProfileId: string, direction: SwipeDirection): JaredDemoState {

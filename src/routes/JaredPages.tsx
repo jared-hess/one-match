@@ -14,6 +14,7 @@ import { PageShell } from '../components/PageShell';
 import {
   buildJaredDemoDeck,
   DEMO_DECK_SIZES,
+  endJaredDemoMode,
   getDemoEligibleJaredProfiles,
   getJaredDemoState,
   resetJaredDemoState,
@@ -768,7 +769,7 @@ export function JaredDemoPage() {
   }
 
   function handleEndDemo() {
-    const nextState = resetJaredDemoState(demoState.deckSize);
+    const nextState = endJaredDemoMode();
     setDemoState(nextState);
     setStage('launch');
   }

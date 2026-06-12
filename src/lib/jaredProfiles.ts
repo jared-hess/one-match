@@ -1,12 +1,13 @@
 import { createDemoMutationResult, createUnavailableMutationResult, isDemoModeEnabled } from './demoMode';
 import { getSupabase } from './supabase';
+import { fallbackJaredProfiles } from '../data/jaredProfiles';
 import type { DemoAwareOptions, JaredProfile, JaredProfileInsert, JaredProfileUpdate, MutationResult } from '../types';
 
 export async function listActiveJaredProfiles(): Promise<JaredProfile[]> {
   const supabase = getSupabase();
 
   if (!supabase.available) {
-    return [];
+    return fallbackJaredProfiles;
   }
 
   const { data, error } = await supabase.client
@@ -20,7 +21,13 @@ export async function listActiveJaredProfiles(): Promise<JaredProfile[]> {
     throw error;
   }
 
-  return data ?? [];
+  return data?.length ? data : fallbackJaredProfiles;
+}
+
+export async function getVisibleJaredProfile(idOrSlug: string): Promise<JaredProfile | null> {
+  const profiles = await listActiveJaredProfiles();
+
+  return profiles.find((profile) => profile.id === idOrSlug || profile.slug === idOrSlug) ?? null;
 }
 
 export async function listAllJaredProfilesForJared(): Promise<JaredProfile[]> {

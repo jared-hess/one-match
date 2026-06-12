@@ -1,6 +1,9 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, RouterProvider } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { DemoCompletionScreen } from './components/demo/DemoCompletionScreen';
+import { DemoLauncher } from './components/demo/DemoLauncher';
+import { DemoSwipeFlow } from './components/demo/DemoSwipeFlow';
 import { InboundLikeCard } from './components/jared/InboundLikeCard';
 import { InboundLikeDetail } from './components/jared/InboundLikeDetail';
 import { JaredProfileForm } from './components/jared/JaredProfileForm';
@@ -8,6 +11,7 @@ import { JaredProfilePreview } from './components/jared/JaredProfilePreview';
 import { RelationshipStatusBadge } from './components/jared/RelationshipStatusBadge';
 import { ChatThread } from './components/messages/ChatThread';
 import { fallbackJaredProfiles } from './data/jaredProfiles';
+import { buildJaredDemoDeck, getJaredDemoState, JARED_DEMO_STATE_KEY, resetJaredDemoState } from './lib/demoMode';
 import { createJaredProfile } from './lib/jaredProfiles';
 import { isMatchedOpenConversation, sendMessage } from './lib/messages';
 import { addJaredNote, isProfileCompleteForJared, matchRelationshipBack } from './lib/relationships';
@@ -456,5 +460,92 @@ describe('App', () => {
     expect(JSON.parse(window.localStorage.getItem(LOCAL_SWIPES_KEY) ?? '[]')).toHaveLength(3);
     expect(JSON.parse(window.localStorage.getItem(QUEUED_SWIPES_KEY) ?? '[]')).toHaveLength(2);
     expect(JSON.parse(window.localStorage.getItem(VIEWED_COUNT_KEY) ?? '0')).toBe(3);
+  });
+
+  it('keeps Jared demo state isolated from normal anonymous swipe queues', () => {
+    const state = resetJaredDemoState(7);
+    const deck = buildJaredDemoDeck(
+      [
+        ...fallbackJaredProfiles,
+        { ...fallbackJaredProfiles[0], id: 'private-ineligible', sort_order: 1, demo_eligible: false },
+        { ...fallbackJaredProfiles[1], id: 'archived-ineligible', sort_order: 2, archived: true }
+      ],
+      7
+    );
+
+    expect(state.deckSize).toBe(7);
+    expect(deck).toHaveLength(7);
+    expect(deck.every((profile) => profile.demo_eligible && profile.active && !profile.archived)).toBe(true);
+    expect(window.localStorage.getItem(JARED_DEMO_STATE_KEY)).toContain('"deckSize":7');
+    expect(window.localStorage.getItem(LOCAL_SWIPES_KEY)).toBeNull();
+    expect(window.localStorage.getItem(QUEUED_SWIPES_KEY)).toBeNull();
+    expect(window.localStorage.getItem(VIEWED_COUNT_KEY)).toBeNull();
+  });
+
+  it('renders deck size choices and resets local demo state instantly', () => {
+    const onDeckSizeChange = vi.fn((deckSize) => resetJaredDemoState(deckSize));
+
+    render(<DemoLauncher availableProfiles={10} deckSize={5} onDeckSizeChange={onDeckSizeChange} onStart={() => undefined} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /7 cards/i }));
+
+    expect(onDeckSizeChange).toHaveBeenCalledWith(7);
+    expect(getJaredDemoState().deckSize).toBe(7);
+    expect(screen.getByRole('button', { name: /5 cards/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /10 cards/i })).toBeInTheDocument();
+  });
+
+  it('keeps the Jared demo route behind the existing Jared guard when Supabase is unavailable', () => {
+    render(<RouterProvider router={createTestRouter(['/jared/demo'])} />);
+
+    expect(screen.getByText(/live datejared is waiting for supabase keys/i)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /launch demo/i })).not.toBeInTheDocument();
+  });
+
+  it('shows demo completion copy and share capability status', () => {
+    const onEndDemo = vi.fn();
+    const onShare = vi.fn();
+
+    render(
+      <MemoryRouter>
+        <DemoCompletionScreen canShare={false} onEndDemo={onEndDemo} onShare={onShare} shareStatus="Share Link is unavailable in this browser." />
+      </MemoryRouter>
+    );
+
+    expect(screen.getByText('Demo complete')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /candidate pool evaluation complete/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /end demo/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /open public app/i })).toHaveAttribute('href', '/');
+    expect(screen.getByRole('button', { name: /share link/i })).toBeDisabled();
+    expect(screen.getByRole('status')).toHaveTextContent(/unavailable/i);
+  });
+
+  it('reveals candidate similarity after exactly two demo card views without normal queue writes', async () => {
+    const state = resetJaredDemoState(5);
+
+    render(
+      <MemoryRouter>
+        <DemoSwipeFlow
+          canShare={false}
+          onComplete={() => undefined}
+          onEndDemo={() => undefined}
+          onShare={() => undefined}
+          profiles={fallbackJaredProfiles.slice(0, 3)}
+          shareStatus="Share unavailable."
+          state={state}
+        />
+      </MemoryRouter>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /like/i }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /pass/i }));
+
+    expect(await screen.findByRole('dialog')).toHaveTextContent(/candidate similarity elevated/i);
+    expect(getJaredDemoState().similarityRevealed).toBe(true);
+    expect(window.localStorage.getItem(LOCAL_SWIPES_KEY)).toBeNull();
+    expect(window.localStorage.getItem(QUEUED_SWIPES_KEY)).toBeNull();
+    expect(window.localStorage.getItem(VIEWED_COUNT_KEY)).toBeNull();
   });
 });

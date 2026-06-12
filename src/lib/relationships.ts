@@ -9,7 +9,18 @@ export async function fetchOwnRelationships(): Promise<Relationship[]> {
     return [];
   }
 
-  const { data, error } = await supabase.client.from('relationships').select('*').order('updated_at', { ascending: false });
+  const user = await supabase.client.auth.getUser();
+  const userId = user.data.user?.id;
+
+  if (!userId) {
+    return [];
+  }
+
+  const { data, error } = await supabase.client
+    .from('relationships')
+    .select('*')
+    .eq('user_id', userId)
+    .order('updated_at', { ascending: false });
 
   if (error) {
     throw error;

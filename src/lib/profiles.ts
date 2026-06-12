@@ -14,7 +14,14 @@ export async function fetchOwnProfile(): Promise<Profile | null> {
     return null;
   }
 
-  const { data, error } = await supabase.client.from('profiles').select('*').maybeSingle();
+  const user = await supabase.client.auth.getUser();
+  const userId = user.data.user?.id;
+
+  if (!userId) {
+    return null;
+  }
+
+  const { data, error } = await supabase.client.from('profiles').select('*').eq('user_id', userId).maybeSingle();
 
   if (error) {
     throw error;

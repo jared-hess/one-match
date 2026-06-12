@@ -21,6 +21,7 @@ import {
   type DemoDeckSize,
   type JaredDemoState
 } from '../lib/demoMode';
+import { fetchDeletionRequestsForJared, updateDeletionRequestForJared } from '../lib/deletionRequests';
 import {
   archiveJaredProfile,
   createJaredProfile,
@@ -39,7 +40,7 @@ import {
   type MessagingConversation
 } from '../lib/messages';
 import { addJaredNote, decideRelationship, fetchJaredInboundContext, fetchJaredInboundContexts, matchRelationshipBack } from '../lib/relationships';
-import type { InboundRelationshipContext, JaredProfile, JaredProfileInsert, JaredProfileUpdate, Message, RelationshipStatus } from '../types';
+import type { DeletionRequest, DeletionRequestStatus, InboundRelationshipContext, JaredProfile, JaredProfileInsert, JaredProfileUpdate, Message, RelationshipStatus } from '../types';
 
 type DemoStage = 'launch' | 'swiping' | 'complete';
 
@@ -823,11 +824,74 @@ export function JaredDemoPage() {
 }
 
 export function JaredSettingsPage() {
+  const [requests, setRequests] = useState<DeletionRequest[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [status, setStatus] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setStatus(null);
+
+    try {
+      setRequests(await fetchDeletionRequestsForJared());
+    } catch (caught) {
+      setStatus(caught instanceof Error ? caught.message : 'Unable to load deletion requests.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    Promise.resolve().then(() => void load());
+  }, [load]);
+
+  async function handleStatusChange(id: string, nextStatus: DeletionRequestStatus) {
+    setStatus(`Marking request ${nextStatus}.`);
+    const result = await updateDeletionRequestForJared(id, { status: nextStatus });
+
+    if (result.error) {
+      setStatus(result.error.message);
+      return;
+    }
+
+    setStatus(`Deletion request marked ${nextStatus}.`);
+    await load();
+  }
+
   return (
-    <PageShell eyebrow="Jared settings" title="Workspace settings are protected." description="Account-level controls for Jared stay behind the existing role guard.">
-      <div className="space-y-3">
+    <PageShell eyebrow="Jared settings" title="Workspace safety controls" description="Account-level controls for Jared stay behind the existing role guard, including deletion request review.">
+      <div className="space-y-4">
         <EmptyJaredState title="Route guard" description="This route renders only after profiles.role is confirmed as jared." />
-        <EmptyJaredState title="Private boundaries" description="Inbound labels, relationship decisions, and notes remain unavailable from normal routes." />
+        {loading ? <EmptyJaredState title="Loading deletion requests" description="Checking requested, completed, and cancelled account deletion records." /> : null}
+        {status ? <p className="rounded-3xl border border-blush-100 bg-cream-50/80 p-4 text-sm font-bold text-merlot-900" role="status">{status}</p> : null}
+        {!loading && !requests.length ? <EmptyJaredState title="No deletion requests" description="Signed-in user deletion requests will appear here after submission." /> : null}
+        {requests.map((request) => (
+          <article className="rounded-app border border-white/80 bg-white/84 p-5 shadow-card backdrop-blur-xl" key={request.id}>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <p className="text-xs font-extrabold uppercase tracking-[0.24em] text-blush-600">Deletion request</p>
+                <h2 className="mt-2 font-display text-3xl font-semibold leading-none tracking-[-0.04em] text-merlot-900">{request.status}</h2>
+                <p className="mt-2 text-sm leading-6 text-ink-600">User id: {request.user_id}</p>
+                <p className="text-sm leading-6 text-ink-600">Requested: {new Date(request.requested_at).toLocaleString()}</p>
+                {request.completed_at ? <p className="text-sm leading-6 text-ink-600">Completed: {new Date(request.completed_at).toLocaleString()}</p> : null}
+                {request.cancelled_at ? <p className="text-sm leading-6 text-ink-600">Cancelled: {new Date(request.cancelled_at).toLocaleString()}</p> : null}
+              </div>
+              <div className="grid gap-2 sm:min-w-40">
+                {(['requested', 'completed', 'cancelled'] as const).map((nextStatus) => (
+                  <button
+                    className="rounded-full border border-blush-100 bg-cream-50/80 px-4 py-2 text-sm font-extrabold text-merlot-900 disabled:bg-blush-100 disabled:text-ink-500"
+                    disabled={request.status === nextStatus}
+                    key={nextStatus}
+                    onClick={() => void handleStatusChange(request.id, nextStatus)}
+                    type="button"
+                  >
+                    Mark {nextStatus}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </article>
+        ))}
       </div>
     </PageShell>
   );

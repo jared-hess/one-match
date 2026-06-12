@@ -6,6 +6,8 @@ import { PendingState } from '../components/normal/PendingState';
 import { ProfileDetailSheet } from '../components/normal/ProfileDetailSheet';
 import { ProfileForm } from '../components/normal/ProfileForm';
 import { SwipeDeck } from '../components/normal/SwipeDeck';
+import { getCurrentUser, signOut } from '../lib/auth';
+import { createOwnDeletionRequest, fetchOwnDeletionRequests } from '../lib/deletionRequests';
 import { getVisibleJaredProfile, listActiveJaredProfiles } from '../lib/jaredProfiles';
 import {
   fetchMessages,
@@ -17,6 +19,45 @@ import {
 } from '../lib/messages';
 import type { JaredProfile, Message } from '../types';
 import { PageShell } from '../components/PageShell';
+
+function PolicySection({ title, children }: { title: string; children: string }) {
+  return (
+    <section className="rounded-3xl border border-blush-100 bg-cream-50/80 p-4">
+      <h2 className="font-display text-2xl font-semibold tracking-[-0.03em] text-merlot-900">{title}</h2>
+      <p className="mt-2 text-sm leading-6 text-ink-600">{children}</p>
+    </section>
+  );
+}
+
+export function PrivacyPage() {
+  return (
+    <PageShell eyebrow="Privacy" title="Privacy Policy MVP" description="A plain-language summary of how DateJared handles account, profile, and deletion data for adults 18 and older.">
+      <div className="space-y-4">
+        <PolicySection title="Adults only">DateJared is for people who confirm they are 18 or older. Do not use the service if you are under 18.</PolicySection>
+        <PolicySection title="Minimal data collection">We collect only the details needed for the MVP dating flow: Google sign-in identity, email, display name, age confirmation, general city, profile text, choices, matches, messages, and account safety records.</PolicySection>
+        <PolicySection title="Location boundaries">DateJared asks for a general city only. It does not request precise location, background tracking, or live device location.</PolicySection>
+        <PolicySection title="Private profiles">Normal user profiles are not public, searchable, or available for user-to-user discovery. Jared can review inbound interest and matched conversations inside guarded routes.</PolicySection>
+        <PolicySection title="Photos and processors">Uploaded profile photos are handled as private account media. Google provides sign-in, and Supabase stores account, profile, relationship, message, photo, and deletion-request records for the service.</PolicySection>
+        <PolicySection title="No sale of data">DateJared does not sell personal data. MVP data is used to run sign-in, profile completion, matching, messaging, moderation, safety, and deletion workflows.</PolicySection>
+        <PolicySection title="Deletion process">Signed-in users can request account and data deletion from the delete-data route or settings. Jared can mark those requests requested, completed, or cancelled in the guarded workspace after review.</PolicySection>
+      </div>
+    </PageShell>
+  );
+}
+
+export function TermsPage() {
+  return (
+    <PageShell eyebrow="Terms" title="Terms of Service MVP" description="Use DateJared respectfully, honestly, and only if you are an adult. This product copy is not legal advice.">
+      <div className="space-y-4">
+        <PolicySection title="Eligibility">You must be 18 or older and able to use this service responsibly. You agree not to misrepresent your age, identity, or intent.</PolicySection>
+        <PolicySection title="Account conduct">Use respectful profile text, messages, and photos. Do not upload illegal, explicit, harassing, or non-consensual content.</PolicySection>
+        <PolicySection title="No public directory">DateJared is a narrow, private dating experience. It does not provide public profile browsing, user-to-user search, or broad discovery between normal users.</PolicySection>
+        <PolicySection title="Safety controls">Jared may review inbound interest, messages, and account signals to keep the experience safe, respond to deletion requests, and close access where needed.</PolicySection>
+        <PolicySection title="Data deletion">You can request deletion of account and profile data from the delete-data route or settings after sign-in. Some records may need short retention for safety, abuse prevention, or operational integrity.</PolicySection>
+      </div>
+    </PageShell>
+  );
+}
 
 export function LandingPage() {
   return (
@@ -274,6 +315,147 @@ export function MessagesPage() {
           statusText={realtimeText}
         />
       ) : null}
+    </PageShell>
+  );
+}
+
+export function DeleteDataPage() {
+  const [signedIn, setSignedIn] = useState<boolean | null>(null);
+  const [status, setStatus] = useState<string>('Checking sign-in status.');
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+
+    getCurrentUser()
+      .then((user) => {
+        if (mounted) {
+          setSignedIn(Boolean(user));
+          setStatus(user ? 'You can submit a deletion request for this signed-in account.' : 'Sign in with Google first so DateJared can connect the deletion request to the correct account.');
+        }
+      })
+      .catch((caught) => {
+        if (mounted) {
+          setSignedIn(false);
+          setStatus(caught instanceof Error ? caught.message : 'Sign-in status is unavailable.');
+        }
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  async function handleRequestDeletion() {
+    setBusy(true);
+    setStatus('Submitting your deletion request.');
+
+    const result = await createOwnDeletionRequest();
+
+    if (result.error) {
+      setStatus(result.error.message);
+    } else if (result.demoMode) {
+      setStatus('Demo mode did not write a deletion request. End demo mode and sign in to submit one.');
+    } else {
+      setStatus('Deletion request submitted. Jared can review and mark it completed or cancelled from the guarded workspace.');
+    }
+
+    setBusy(false);
+  }
+
+  return (
+    <PageShell eyebrow="Delete data" title="Request account and data deletion" description="Signed-in users can ask DateJared to delete account, profile, message, photo, and relationship data tied to their account.">
+      <div className="space-y-4">
+        <p className="rounded-3xl border border-blush-100 bg-cream-50/80 p-4 text-sm leading-6 text-ink-600">
+          Anonymous visitors cannot create deletion requests because there is no verified account to delete. Sign in with Google, then return here or use Settings to submit the request.
+        </p>
+        <p className="rounded-3xl border border-blush-100 bg-white/70 p-4 text-sm font-bold leading-6 text-merlot-900" role="status">
+          {status}
+        </p>
+        <button
+          className="w-full rounded-full bg-blush-500 px-5 py-3 text-sm font-extrabold text-cream-50 shadow-glow disabled:cursor-not-allowed disabled:bg-ink-200 disabled:text-ink-500"
+          disabled={!signedIn || busy}
+          onClick={() => void handleRequestDeletion()}
+          type="button"
+        >
+          {busy ? 'Submitting request' : 'Request deletion'}
+        </button>
+        <Link className="inline-flex text-sm font-bold text-blush-600" to="/privacy">
+          Read the privacy policy
+        </Link>
+      </div>
+    </PageShell>
+  );
+}
+
+export function SettingsPage() {
+  const [requests, setRequests] = useState<Array<{ id: string; status: string; requested_at: string }>>([]);
+  const [status, setStatus] = useState<string>('Loading account controls.');
+  const [busy, setBusy] = useState(false);
+
+  const load = useCallback(async () => {
+    try {
+      const nextRequests = await fetchOwnDeletionRequests();
+      setRequests(nextRequests.map((request) => ({ id: request.id, status: request.status, requested_at: request.requested_at })));
+      setStatus(nextRequests.length ? 'Deletion request history loaded.' : 'No deletion request is currently on file for this account.');
+    } catch (caught) {
+      setStatus(caught instanceof Error ? caught.message : 'Unable to load settings.');
+    }
+  }, []);
+
+  useEffect(() => {
+    Promise.resolve().then(() => void load());
+  }, [load]);
+
+  async function handleRequestDeletion() {
+    setBusy(true);
+    setStatus('Submitting your deletion request.');
+    const result = await createOwnDeletionRequest();
+
+    if (result.error) {
+      setStatus(result.error.message);
+    } else {
+      setStatus('Deletion request submitted.');
+      await load();
+    }
+
+    setBusy(false);
+  }
+
+  async function handleSignOut() {
+    setBusy(true);
+    await signOut();
+    setStatus('Signed out.');
+    setBusy(false);
+  }
+
+  return (
+    <PageShell eyebrow="Settings" title="Account and safety controls" description="Manage normal-user account boundaries, deletion requests, and sign-out from one protected place.">
+      <div className="space-y-4">
+        <section className="rounded-3xl border border-blush-100 bg-cream-50/80 p-4">
+          <h2 className="font-display text-2xl font-semibold tracking-[-0.03em] text-merlot-900">Safety boundaries</h2>
+          <p className="mt-2 text-sm leading-6 text-ink-600">Your profile is not public, normal users cannot browse each other, and DateJared asks for general city rather than precise location.</p>
+        </section>
+        <section className="rounded-3xl border border-blush-100 bg-white/70 p-4">
+          <h2 className="font-display text-2xl font-semibold tracking-[-0.03em] text-merlot-900">Delete data</h2>
+          <p className="mt-2 text-sm leading-6 text-ink-600" role="status">{status}</p>
+          <button className="mt-4 w-full rounded-full bg-blush-500 px-5 py-3 text-sm font-extrabold text-cream-50 shadow-glow disabled:bg-ink-200" disabled={busy} onClick={() => void handleRequestDeletion()} type="button">
+            Request account deletion
+          </button>
+          {requests.length ? (
+            <ul className="mt-4 space-y-2">
+              {requests.map((request) => (
+                <li className="rounded-2xl border border-blush-100 bg-cream-50/80 p-3 text-sm text-ink-600" key={request.id}>
+                  <span className="font-bold text-merlot-900">{request.status}</span> · requested {new Date(request.requested_at).toLocaleDateString()}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </section>
+        <button className="w-full rounded-full border border-blush-100 bg-cream-50/70 px-5 py-3 text-sm font-extrabold text-merlot-900" disabled={busy} onClick={() => void handleSignOut()} type="button">
+          Sign out
+        </button>
+      </div>
     </PageShell>
   );
 }

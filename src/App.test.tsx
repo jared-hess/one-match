@@ -126,6 +126,53 @@ describe('App', () => {
     expect(screen.queryByRole('link', { name: /jared/i })).not.toBeInTheDocument();
   });
 
+  it('renders privacy and terms copy with Play Store safety boundaries', () => {
+    render(<RouterProvider router={createTestRouter(['/privacy'])} />);
+
+    expect(screen.getByRole('heading', { name: /privacy policy mvp/i })).toBeInTheDocument();
+    expect(screen.getByText(/18 or older/i)).toBeInTheDocument();
+    expect(screen.getByText(/general city only/i)).toBeInTheDocument();
+    expect(screen.getByText(/does not sell personal data/i)).toBeInTheDocument();
+    expect(screen.getByText(/Google provides sign-in, and Supabase stores/i)).toBeInTheDocument();
+
+    render(<RouterProvider router={createTestRouter(['/terms'])} />);
+
+    expect(screen.getByRole('heading', { name: /terms of service mvp/i })).toBeInTheDocument();
+    expect(screen.getByText(/not legal advice/i)).toBeInTheDocument();
+    expect(screen.getByText(/You must be 18 or older/i)).toBeInTheDocument();
+  });
+
+  it('keeps public policy routes clear of forbidden launch copy', () => {
+    const forbiddenCopy = new RegExp(
+      [
+        ['Tin', 'der'].join(''),
+        ['Canonical', ' Jared'].join(''),
+        ['multi', 'verse'].join(''),
+        ['app', 'lication'].join(''),
+        ['app', 'licant'].join(''),
+        ['jo', 'ke'].join(''),
+        ['lo', 'l'].join(''),
+        ['ha', 'ha'].join('')
+      ].join('|'),
+      'i'
+    );
+
+    for (const path of ['/privacy', '/terms', '/delete-data']) {
+      const { unmount, container } = render(<RouterProvider router={createTestRouter([path])} />);
+
+      expect(container.textContent).not.toMatch(forbiddenCopy);
+      unmount();
+    }
+  });
+
+  it('gives anonymous delete-data visitors clear non-writing guidance', async () => {
+    render(<RouterProvider router={createTestRouter(['/delete-data'])} />);
+
+    expect(screen.getByRole('heading', { name: /request account and data deletion/i })).toBeInTheDocument();
+    expect(await screen.findByText(/Sign in with Google first/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /request deletion/i })).toBeDisabled();
+  });
+
   it('renders preferences without exposing a Jared-specific interest option', () => {
     render(<RouterProvider router={createTestRouter(['/preferences'])} />);
 

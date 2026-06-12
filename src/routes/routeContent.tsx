@@ -4,14 +4,18 @@ import { JaredRouteGuard } from '../components/JaredRouteGuard';
 import { PlaceholderPage, type PlaceholderPageProps } from './PlaceholderPage';
 import {
   CompleteProfilePage,
+  DeleteDataPage,
   LandingPage,
   MatchPage,
   MessagesPage,
   OnboardingPage,
   PendingPage,
   PreferencesPage,
+  PrivacyPage,
   ProfileDetailPage,
-  SwipePage
+  SettingsPage,
+  SwipePage,
+  TermsPage
 } from './NormalPages';
 import {
   JaredDemoPage,
@@ -111,30 +115,34 @@ export const normalRouteConfigs: RouteConfig[] = [
     path: '/settings',
     guarded: 'auth',
     eyebrow: 'Settings',
-    title: 'Account settings will live here.',
-    description: 'A protected placeholder for privacy, account, and sign-out settings.',
-    note: 'Deletion request and settings workflows are intentionally not complete in this task.'
+    title: 'Account and safety controls.',
+    description: 'Protected normal-user settings for privacy boundaries, deletion requests, and sign-out.',
+    note: 'Deletion requests use the shared data layer and remain tied to the signed-in account.',
+    element: <SettingsPage />
   },
   {
     path: '/privacy',
     eyebrow: 'Privacy',
-    title: 'Privacy copy route is ready for legal content.',
-    description: 'This public placeholder reserves the privacy policy path.',
-    note: 'Legal copy is not implemented yet.'
+    title: 'Privacy Policy MVP.',
+    description: 'Plain-language privacy copy for DateJared adults-only account, profile, and deletion data.',
+    note: 'This copy is not legal advice.',
+    element: <PrivacyPage />
   },
   {
     path: '/terms',
     eyebrow: 'Terms',
-    title: 'Terms route is ready for legal content.',
-    description: 'This public placeholder reserves the terms of service path.',
-    note: 'Legal copy is not implemented yet.'
+    title: 'Terms of Service MVP.',
+    description: 'Plain-language expectations for adults-only account use, safety, and deletion requests.',
+    note: 'This copy is not legal advice.',
+    element: <TermsPage />
   },
   {
     path: '/delete-data',
     eyebrow: 'Delete data',
-    title: 'Data deletion guidance has a public destination.',
-    description: 'This placeholder will later explain signed-in request behavior and anonymous guidance without blocking the route today.',
-    note: 'The backend status contract includes requested, completed, and cancelled; Task 10 owns the real request workflow.'
+    title: 'Request account and data deletion.',
+    description: 'Signed-in users can submit deletion requests; anonymous visitors get clear sign-in guidance.',
+    note: 'Requests move through requested, completed, and cancelled states.',
+    element: <DeleteDataPage />
   }
 ];
 

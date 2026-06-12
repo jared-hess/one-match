@@ -36,6 +36,8 @@ export type JaredProfileUpdate = Partial<Omit<JaredProfile, 'id' | 'created_at' 
 
 export type MessageInsert = Pick<Message, 'conversation_id' | 'sender_id' | 'body'>;
 
+export type JaredNoteInsert = Pick<JaredNote, 'relationship_id' | 'author_user_id' | 'note'>;
+
 export interface Database {
   public: {
     Tables: {
@@ -45,7 +47,7 @@ export interface Database {
       relationships: RowTable<Relationship>;
       conversations: RowTable<Conversation>;
       messages: RowTable<Message, MessageInsert>;
-      jared_notes: RowTable<JaredNote>;
+      jared_notes: RowTable<JaredNote, JaredNoteInsert>;
       deletion_requests: RowTable<DeletionRequest>;
     };
     Views: Record<string, never>;

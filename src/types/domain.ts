@@ -108,6 +108,22 @@ export type DemoAwareOptions = {
   demoMode?: boolean;
 };
 
+export type InboundRelationshipContext = {
+  relationship: Relationship;
+  userProfile: Profile | null;
+  likedProfiles: JaredProfile[];
+  firstLikedProfile: JaredProfile | null;
+  latestLikedProfile: JaredProfile | null;
+  notes: JaredNote[];
+  conversation: Conversation | null;
+  latestMessage: Message | null;
+};
+
+export type RelationshipDecisionResult = {
+  relationship: Relationship | null;
+  conversation: Conversation | null;
+};
+
 export type MutationResult<T> = {
   data: T | null;
   error: Error | null;

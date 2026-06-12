@@ -27,20 +27,20 @@ create table if not exists public.jared_profiles (
   slug text not null unique,
   internal_label text not null,
   display_name text not null default 'Jared',
-  age_label text not null,
-  location text not null,
+  age_label text not null default '30-ish',
+  location text not null default 'Oakland',
   bio text not null,
   prompts jsonb not null default '[]'::jsonb,
   tags text[] not null default '{}',
   image_urls text[] not null default '{}',
   sort_order integer not null default 0,
-  demo boolean not null default false,
+  demo_eligible boolean not null default true,
   active boolean not null default true,
-  archived_at timestamptz,
+  archived boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint jared_profiles_display_name_jared check (display_name = 'Jared'),
-  constraint jared_profiles_active_archive_consistency check (active or archived_at is not null)
+  constraint jared_profiles_active_archived_consistency check (active or archived)
 );
 
 create table if not exists public.swipes (
@@ -58,15 +58,14 @@ create table if not exists public.relationships (
   user_id uuid not null references auth.users(id) on delete cascade,
   jared_user_id uuid not null references auth.users(id) on delete cascade,
   status text not null default 'pending' check (status in ('pending', 'matched', 'passed', 'unmatched', 'archived')),
-  first_liked_jared_profile_id uuid references public.jared_profiles(id) on delete set null,
-  latest_liked_jared_profile_id uuid references public.jared_profiles(id) on delete set null,
-  matched_at timestamptz,
-  archived_at timestamptz,
+  first_liked_profile_id uuid references public.jared_profiles(id) on delete set null,
+  latest_liked_profile_id uuid references public.jared_profiles(id) on delete set null,
+  decided_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   unique (user_id, jared_user_id),
   constraint relationships_no_self_match check (user_id <> jared_user_id),
-  constraint relationships_matched_timestamp check (status <> 'matched' or matched_at is not null)
+  constraint relationships_decided_timestamp check (status = 'pending' or decided_at is not null)
 );
 
 create table if not exists public.conversations (
@@ -75,7 +74,6 @@ create table if not exists public.conversations (
   user_id uuid not null references auth.users(id) on delete cascade,
   jared_user_id uuid not null references auth.users(id) on delete cascade,
   status text not null default 'open' check (status in ('open', 'archived')),
-  archived_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint conversations_no_self_chat check (user_id <> jared_user_id)
@@ -84,7 +82,7 @@ create table if not exists public.conversations (
 create table if not exists public.messages (
   id uuid primary key default gen_random_uuid(),
   conversation_id uuid not null references public.conversations(id) on delete cascade,
-  sender_user_id uuid not null references auth.users(id) on delete cascade,
+  sender_id uuid not null references auth.users(id) on delete cascade,
   body text not null check (length(trim(body)) between 1 and 4000),
   read_at timestamptz,
   created_at timestamptz not null default now()
@@ -93,8 +91,8 @@ create table if not exists public.messages (
 create table if not exists public.jared_notes (
   id uuid primary key default gen_random_uuid(),
   relationship_id uuid not null references public.relationships(id) on delete cascade,
-  jared_user_id uuid not null references auth.users(id) on delete cascade,
-  body text not null check (length(trim(body)) between 1 and 4000),
+  author_user_id uuid not null references auth.users(id) on delete cascade,
+  note text not null check (length(trim(note)) between 1 and 4000),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -102,31 +100,30 @@ create table if not exists public.jared_notes (
 create table if not exists public.deletion_requests (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
-  status text not null default 'requested' check (status in ('requested', 'completed', 'cancelled')),
+  status text not null default 'requested' check (status in ('requested', 'completed')),
   requested_at timestamptz not null default now(),
   completed_at timestamptz,
-  cancelled_at timestamptz,
   notes text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  constraint deletion_requests_terminal_timestamp check (
-    (status = 'requested' and completed_at is null and cancelled_at is null)
-    or (status = 'completed' and completed_at is not null)
-    or (status = 'cancelled' and cancelled_at is not null)
-  )
+  constraint deletion_requests_completed_timestamp check (status <> 'completed' or completed_at is not null)
 );
 
 create index if not exists profiles_user_id_idx on public.profiles(user_id);
 create index if not exists profiles_role_idx on public.profiles(role);
-create index if not exists jared_profiles_active_sort_idx on public.jared_profiles(active, archived_at, sort_order);
+create index if not exists jared_profiles_active_sort_idx on public.jared_profiles(active, archived, sort_order);
+create index if not exists jared_profiles_demo_eligible_idx on public.jared_profiles(demo_eligible);
 create index if not exists swipes_user_id_idx on public.swipes(user_id);
 create index if not exists swipes_jared_profile_id_idx on public.swipes(jared_profile_id);
 create index if not exists swipes_direction_idx on public.swipes(direction);
 create index if not exists relationships_user_status_idx on public.relationships(user_id, status);
 create index if not exists relationships_jared_status_idx on public.relationships(jared_user_id, status);
+create index if not exists relationships_latest_liked_profile_idx on public.relationships(latest_liked_profile_id);
 create index if not exists conversations_user_status_idx on public.conversations(user_id, status);
 create index if not exists conversations_jared_status_idx on public.conversations(jared_user_id, status);
 create index if not exists messages_conversation_created_idx on public.messages(conversation_id, created_at);
+create index if not exists messages_sender_idx on public.messages(sender_id);
+create index if not exists jared_notes_author_idx on public.jared_notes(author_user_id);
 create index if not exists deletion_requests_user_status_idx on public.deletion_requests(user_id, status);
 create index if not exists deletion_requests_status_idx on public.deletion_requests(status);
 
@@ -246,7 +243,7 @@ begin
     select 1 from public.jared_profiles jp
     where jp.id = p_jared_profile_id
       and jp.active = true
-      and jp.archived_at is null
+      and jp.archived = false
   ) then
     raise exception 'Jared profile is unavailable';
   end if;
@@ -268,59 +265,17 @@ begin
       user_id,
       jared_user_id,
       status,
-      first_liked_jared_profile_id,
-      latest_liked_jared_profile_id
+      first_liked_profile_id,
+      latest_liked_profile_id
     )
     values (v_user_id, v_jared_user_id, 'pending', p_jared_profile_id, p_jared_profile_id)
     on conflict (user_id, jared_user_id) do update
-      set latest_liked_jared_profile_id = excluded.latest_liked_jared_profile_id,
+      set latest_liked_profile_id = excluded.latest_liked_profile_id,
           updated_at = now()
       where public.relationships.status in ('pending', 'passed');
   end if;
 
   return v_swipe;
-end;
-$$;
-
-create or replace function public.jared_decide_relationship(
-  p_relationship_id uuid,
-  p_status text
-)
-returns public.relationships
-language plpgsql
-security definer
-set search_path = public
-as $$
-declare
-  v_relationship public.relationships;
-begin
-  if not public.is_jared() then
-    raise exception 'Only Jared can decide relationships';
-  end if;
-
-  if p_status not in ('matched', 'passed', 'unmatched', 'archived') then
-    raise exception 'Invalid Jared relationship decision';
-  end if;
-
-  update public.relationships
-  set status = p_status,
-      jared_user_id = auth.uid(),
-      matched_at = case when p_status = 'matched' then coalesce(matched_at, now()) else matched_at end,
-      archived_at = case when p_status = 'archived' then coalesce(archived_at, now()) else archived_at end,
-      updated_at = now()
-  where id = p_relationship_id
-    and jared_user_id = auth.uid()
-  returning * into v_relationship;
-
-  if v_relationship.id is null then
-    raise exception 'Relationship not found or not assigned to this Jared account';
-  end if;
-
-  if p_status = 'matched' then
-    perform public.ensure_conversation_for_match(v_relationship.id);
-  end if;
-
-  return v_relationship;
 end;
 $$;
 
@@ -356,11 +311,51 @@ begin
   values (v_relationship.id, v_relationship.user_id, v_relationship.jared_user_id, 'open')
   on conflict (relationship_id) do update
     set status = 'open',
-        archived_at = null,
         updated_at = now()
   returning * into v_conversation;
 
   return v_conversation;
+end;
+$$;
+
+create or replace function public.jared_decide_relationship(
+  p_relationship_id uuid,
+  p_status text
+)
+returns public.relationships
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_relationship public.relationships;
+begin
+  if not public.is_jared() then
+    raise exception 'Only Jared can decide relationships';
+  end if;
+
+  if p_status not in ('matched', 'passed', 'unmatched', 'archived') then
+    raise exception 'Invalid Jared relationship decision';
+  end if;
+
+  update public.relationships
+  set status = p_status,
+      jared_user_id = auth.uid(),
+      decided_at = now(),
+      updated_at = now()
+  where id = p_relationship_id
+    and jared_user_id = auth.uid()
+  returning * into v_relationship;
+
+  if v_relationship.id is null then
+    raise exception 'Relationship not found or not assigned to this Jared account';
+  end if;
+
+  if p_status = 'matched' then
+    perform public.ensure_conversation_for_match(v_relationship.id);
+  end if;
+
+  return v_relationship;
 end;
 $$;
 
@@ -413,7 +408,7 @@ for update using (public.is_jared()) with check (public.is_jared());
 
 drop policy if exists "jared_profiles_select_active" on public.jared_profiles;
 create policy "jared_profiles_select_active" on public.jared_profiles
-for select using ((active = true and archived_at is null) or public.is_jared());
+for select using ((active = true and archived = false) or public.is_jared());
 
 drop policy if exists "jared_profiles_jared_insert" on public.jared_profiles;
 create policy "jared_profiles_jared_insert" on public.jared_profiles
@@ -445,13 +440,21 @@ for insert with check (
   user_id = auth.uid()
   and status = 'pending'
   and jared_user_id = public.current_jared_user_id()
+  and first_liked_profile_id is not null
+  and latest_liked_profile_id is not null
+  and decided_at is null
   and not public.is_jared()
 );
 
 drop policy if exists "relationships_update_pending_context_own" on public.relationships;
 create policy "relationships_update_pending_context_own" on public.relationships
 for update using (user_id = auth.uid() and status in ('pending', 'passed'))
-with check (user_id = auth.uid() and status = 'pending' and not public.is_jared());
+with check (
+  user_id = auth.uid()
+  and status = 'pending'
+  and decided_at is null
+  and not public.is_jared()
+);
 
 drop policy if exists "relationships_jared_update" on public.relationships;
 create policy "relationships_jared_update" on public.relationships
@@ -486,7 +489,7 @@ for select using (public.can_access_conversation(conversation_id));
 drop policy if exists "messages_insert_open_participants" on public.messages;
 create policy "messages_insert_open_participants" on public.messages
 for insert with check (
-  sender_user_id = auth.uid()
+  sender_id = auth.uid()
   and public.can_access_conversation(conversation_id)
 );
 
@@ -501,7 +504,7 @@ for select using (public.is_jared());
 
 drop policy if exists "jared_notes_insert_jared" on public.jared_notes;
 create policy "jared_notes_insert_jared" on public.jared_notes
-for insert with check (public.is_jared() and jared_user_id = auth.uid());
+for insert with check (public.is_jared() and author_user_id = auth.uid());
 
 drop policy if exists "jared_notes_update_jared" on public.jared_notes;
 create policy "jared_notes_update_jared" on public.jared_notes

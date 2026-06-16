@@ -37,6 +37,24 @@ Use these exact commands:
 - `npm run cap:sync`
 - `npm run android:open`
 - `npm run android:run`
+- `npm run format`
+- `npm run format:check`
+- `npm run ci`
+- `npm run prepare`
+- `npm run precommit`
+
+## Quality gates
+
+Run the local gates before opening a pull request:
+
+- `npm run format:check`
+- `npm run typecheck`
+- `npm run lint`
+- `npm run test`
+- `npm run build`
+- `npm run ci`
+
+The local pre-commit hook runs `npm run precommit`, which applies staged-file lint and format checks before a commit is created.
 
 ## Local setup
 

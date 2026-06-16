@@ -12,5 +12,11 @@ export function AuthCallbackPage() {
       .catch(() => navigate('/complete-profile', { replace: true }));
   }, [navigate]);
 
-  return <PageShell eyebrow="Auth callback" title="Finishing secure sign-in." description="DateJared is resolving the Google auth callback and routing you to the right next step." />;
+  return (
+    <PageShell
+      eyebrow="Auth callback"
+      title="Finishing secure sign-in."
+      description="DateJared is resolving the Google auth callback and routing you to the right next step."
+    />
+  );
 }

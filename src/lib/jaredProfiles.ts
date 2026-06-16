@@ -1,7 +1,17 @@
-import { createDemoMutationResult, createUnavailableMutationResult, isDemoModeEnabled } from './demoMode';
+import {
+  createDemoMutationResult,
+  createUnavailableMutationResult,
+  isDemoModeEnabled
+} from './demoMode';
 import { getSupabase } from './supabase';
 import { fallbackJaredProfiles } from '../data/jaredProfiles';
-import type { DemoAwareOptions, JaredProfile, JaredProfileInsert, JaredProfileUpdate, MutationResult } from '../types';
+import type {
+  DemoAwareOptions,
+  JaredProfile,
+  JaredProfileInsert,
+  JaredProfileUpdate,
+  MutationResult
+} from '../types';
 
 export type JaredProfileSortMove = 'up' | 'down';
 
@@ -55,7 +65,9 @@ export async function getJaredProfileForJared(id: string): Promise<JaredProfile 
   const supabase = getSupabase();
 
   if (!supabase.available) {
-    return fallbackJaredProfiles.find((profile) => profile.id === id || profile.slug === id) ?? null;
+    return (
+      fallbackJaredProfiles.find((profile) => profile.id === id || profile.slug === id) ?? null
+    );
   }
 
   const { data, error } = await supabase.client
@@ -85,7 +97,11 @@ export async function createJaredProfile(
     return createUnavailableMutationResult(supabase.reason);
   }
 
-  const { data, error } = await supabase.client.from('jared_profiles').insert(input).select('*').single();
+  const { data, error } = await supabase.client
+    .from('jared_profiles')
+    .insert(input)
+    .select('*')
+    .single();
 
   return { data, error, demoMode: false };
 }
@@ -104,12 +120,20 @@ export async function updateJaredProfile(
   if (!supabase.available) {
     return createUnavailableMutationResult(supabase.reason);
   }
-  const { data, error } = await supabase.client.from('jared_profiles').update(input).eq('id', id).select('*').single();
+  const { data, error } = await supabase.client
+    .from('jared_profiles')
+    .update(input)
+    .eq('id', id)
+    .select('*')
+    .single();
 
   return { data, error, demoMode: false };
 }
 
-export async function archiveJaredProfile(id: string, options?: DemoAwareOptions): Promise<MutationResult<JaredProfile>> {
+export async function archiveJaredProfile(
+  id: string,
+  options?: DemoAwareOptions
+): Promise<MutationResult<JaredProfile>> {
   if (isDemoModeEnabled(options)) {
     return createDemoMutationResult<JaredProfile>(null);
   }
@@ -175,7 +199,13 @@ export async function updateJaredProfileSortOrder(
 }
 
 function moveArrayItem<T>(items: T[], fromIndex: number, toIndex: number): T[] {
-  if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0 || fromIndex >= items.length || toIndex >= items.length) {
+  if (
+    fromIndex === toIndex ||
+    fromIndex < 0 ||
+    toIndex < 0 ||
+    fromIndex >= items.length ||
+    toIndex >= items.length
+  ) {
     return items;
   }
 

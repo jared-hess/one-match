@@ -11,5 +11,12 @@
     "skipLibCheck": true,
     "types": ["node"]
   },
-  "include": ["vite.config.ts", "vitest.config.ts", "eslint.config.js", "tailwind.config.ts", "postcss.config.js", "capacitor.config.ts"]
+  "include": [
+    "vite.config.ts",
+    "vitest.config.ts",
+    "eslint.config.js",
+    "tailwind.config.ts",
+    "postcss.config.js",
+    "capacitor.config.ts"
+  ]
 }

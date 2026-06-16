@@ -1,4 +1,8 @@
-import { createDemoMutationResult, createUnavailableMutationResult, isDemoModeEnabled } from './demoMode';
+import {
+  createDemoMutationResult,
+  createUnavailableMutationResult,
+  isDemoModeEnabled
+} from './demoMode';
 import { getSupabase } from './supabase';
 import type {
   Conversation,
@@ -42,14 +46,19 @@ export async function fetchOwnRelationships(): Promise<Relationship[]> {
   return data ?? [];
 }
 
-export async function fetchJaredRelationships(status?: RelationshipStatus): Promise<Relationship[]> {
+export async function fetchJaredRelationships(
+  status?: RelationshipStatus
+): Promise<Relationship[]> {
   const supabase = getSupabase();
 
   if (!supabase.available) {
     return [];
   }
 
-  let query = supabase.client.from('relationships').select('*').order('updated_at', { ascending: false });
+  let query = supabase.client
+    .from('relationships')
+    .select('*')
+    .order('updated_at', { ascending: false });
 
   if (status) {
     query = query.eq('status', status);
@@ -111,7 +120,10 @@ async function fetchJaredProfilesByIds(profileIds: string[]): Promise<JaredProfi
     return [];
   }
 
-  const { data, error } = await supabase.client.from('jared_profiles').select('*').in('id', profileIds);
+  const { data, error } = await supabase.client
+    .from('jared_profiles')
+    .select('*')
+    .in('id', profileIds);
 
   if (error) {
     throw error;
@@ -168,7 +180,9 @@ async function fetchNotesForRelationships(relationshipIds: string[]): Promise<Ja
   return data ?? [];
 }
 
-async function fetchConversationsForRelationships(relationshipIds: string[]): Promise<Conversation[]> {
+async function fetchConversationsForRelationships(
+  relationshipIds: string[]
+): Promise<Conversation[]> {
   if (!relationshipIds.length) {
     return [];
   }
@@ -220,12 +234,17 @@ export function isProfileCompleteForJared(profile: Profile | null): boolean {
   return Boolean(profile?.display_name?.trim() && profile.city?.trim() && profile.age_confirmed);
 }
 
-export async function fetchJaredInboundContexts(status?: RelationshipStatus): Promise<InboundRelationshipContext[]> {
+export async function fetchJaredInboundContexts(
+  status?: RelationshipStatus
+): Promise<InboundRelationshipContext[]> {
   const relationships = await fetchJaredRelationships(status);
   const relationshipIds = relationships.map((relationship) => relationship.id);
   const userIds = uniqueValues(relationships.map((relationship) => relationship.user_id));
   const directProfileIds = uniqueValues(
-    relationships.flatMap((relationship) => [relationship.first_liked_profile_id, relationship.latest_liked_profile_id])
+    relationships.flatMap((relationship) => [
+      relationship.first_liked_profile_id,
+      relationship.latest_liked_profile_id
+    ])
   );
 
   const [profiles, swipes, notes, conversations] = await Promise.all([
@@ -234,15 +253,22 @@ export async function fetchJaredInboundContexts(status?: RelationshipStatus): Pr
     fetchNotesForRelationships(relationshipIds),
     fetchConversationsForRelationships(relationshipIds)
   ]);
-  const allReviewProfileIds = uniqueValues([...directProfileIds, ...swipes.map((swipe) => swipe.jared_profile_id)]);
+  const allReviewProfileIds = uniqueValues([
+    ...directProfileIds,
+    ...swipes.map((swipe) => swipe.jared_profile_id)
+  ]);
   const jaredProfiles = await fetchJaredProfilesByIds(allReviewProfileIds);
-  const latestMessages = await fetchLatestMessagesForConversations(conversations.map((conversation) => conversation.id));
+  const latestMessages = await fetchLatestMessagesForConversations(
+    conversations.map((conversation) => conversation.id)
+  );
 
   const profilesByUserId = new Map(profiles.map((profile) => [profile.user_id, profile]));
   const jaredProfileById = byId(jaredProfiles);
   const swipesByUserId = new Map<string, Swipe[]>();
   const notesByRelationshipId = new Map<string, JaredNote[]>();
-  const conversationByRelationshipId = new Map(conversations.map((conversation) => [conversation.relationship_id, conversation]));
+  const conversationByRelationshipId = new Map(
+    conversations.map((conversation) => [conversation.relationship_id, conversation])
+  );
   const latestMessageByConversationId = new Map<string, Message>();
 
   swipes.forEach((swipe) => {
@@ -250,7 +276,10 @@ export async function fetchJaredInboundContexts(status?: RelationshipStatus): Pr
   });
 
   notes.forEach((note) => {
-    notesByRelationshipId.set(note.relationship_id, [...(notesByRelationshipId.get(note.relationship_id) ?? []), note]);
+    notesByRelationshipId.set(note.relationship_id, [
+      ...(notesByRelationshipId.get(note.relationship_id) ?? []),
+      note
+    ]);
   });
 
   latestMessages.forEach((message) => {
@@ -266,7 +295,9 @@ export async function fetchJaredInboundContexts(status?: RelationshipStatus): Pr
       ...userSwipes.filter(isLikedSwipe).map((swipe) => swipe.jared_profile_id),
       relationship.latest_liked_profile_id
     ]);
-    const passedProfileIds = uniqueValues(userSwipes.filter(isPassedSwipe).map((swipe) => swipe.jared_profile_id));
+    const passedProfileIds = uniqueValues(
+      userSwipes.filter(isPassedSwipe).map((swipe) => swipe.jared_profile_id)
+    );
     const conversation = conversationByRelationshipId.get(relationship.id) ?? null;
 
     return {
@@ -280,16 +311,24 @@ export async function fetchJaredInboundContexts(status?: RelationshipStatus): Pr
         const profile = jaredProfileById.get(profileId);
         return profile ? [profile] : [];
       }),
-      firstLikedProfile: relationship.first_liked_profile_id ? jaredProfileById.get(relationship.first_liked_profile_id) ?? null : null,
-      latestLikedProfile: relationship.latest_liked_profile_id ? jaredProfileById.get(relationship.latest_liked_profile_id) ?? null : null,
+      firstLikedProfile: relationship.first_liked_profile_id
+        ? (jaredProfileById.get(relationship.first_liked_profile_id) ?? null)
+        : null,
+      latestLikedProfile: relationship.latest_liked_profile_id
+        ? (jaredProfileById.get(relationship.latest_liked_profile_id) ?? null)
+        : null,
       notes: notesByRelationshipId.get(relationship.id) ?? [],
       conversation,
-      latestMessage: conversation ? latestMessageByConversationId.get(conversation.id) ?? null : null
+      latestMessage: conversation
+        ? (latestMessageByConversationId.get(conversation.id) ?? null)
+        : null
     } satisfies InboundRelationshipContext;
   });
 }
 
-export async function fetchJaredInboundContext(id: string): Promise<InboundRelationshipContext | null> {
+export async function fetchJaredInboundContext(
+  id: string
+): Promise<InboundRelationshipContext | null> {
   const contexts = await fetchJaredInboundContexts();
 
   return contexts.find((context) => context.relationship.id === id) ?? null;
@@ -323,7 +362,10 @@ export async function matchRelationshipBack(
   options?: DemoAwareOptions
 ): Promise<MutationResult<RelationshipDecisionResult>> {
   if (isDemoModeEnabled(options)) {
-    return createDemoMutationResult<RelationshipDecisionResult>({ relationship: null, conversation: null });
+    return createDemoMutationResult<RelationshipDecisionResult>({
+      relationship: null,
+      conversation: null
+    });
   }
 
   const supabase = getSupabase();

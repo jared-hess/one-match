@@ -1,4 +1,8 @@
-import { createDemoMutationResult, createUnavailableMutationResult, isDemoModeEnabled } from './demoMode';
+import {
+  createDemoMutationResult,
+  createUnavailableMutationResult,
+  isDemoModeEnabled
+} from './demoMode';
 import { getSupabase } from './supabase';
 import type { DemoAwareOptions, MutationResult } from '../types';
 
@@ -9,9 +13,18 @@ export type PhotoUploadResult = {
   publicUrl: string;
 };
 
-export function getJaredProfilePhotoStoragePath(profileId: string, fileName: string, timestamp = Date.now()): string {
+export function getJaredProfilePhotoStoragePath(
+  profileId: string,
+  fileName: string,
+  timestamp = Date.now()
+): string {
   const safeProfileId = profileId.trim() || 'new-profile';
-  const extension = fileName.split('.').pop()?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
+  const extension =
+    fileName
+      .split('.')
+      .pop()
+      ?.toLowerCase()
+      .replace(/[^a-z0-9]/g, '') || 'jpg';
 
   return `${safeProfileId}/${timestamp}.${extension}`;
 }
@@ -31,16 +44,20 @@ export async function uploadJaredProfilePhoto(
     return createUnavailableMutationResult(supabase.reason);
   }
 
-  const { data, error } = await supabase.client.storage.from(JARED_PROFILE_PHOTOS_BUCKET).upload(path, file, {
-    cacheControl: '3600',
-    upsert: false
-  });
+  const { data, error } = await supabase.client.storage
+    .from(JARED_PROFILE_PHOTOS_BUCKET)
+    .upload(path, file, {
+      cacheControl: '3600',
+      upsert: false
+    });
 
   if (error) {
     return { data: null, error, demoMode: false };
   }
 
-  const publicUrl = supabase.client.storage.from(JARED_PROFILE_PHOTOS_BUCKET).getPublicUrl(data.path).data.publicUrl;
+  const publicUrl = supabase.client.storage
+    .from(JARED_PROFILE_PHOTOS_BUCKET)
+    .getPublicUrl(data.path).data.publicUrl;
 
   return {
     data: {

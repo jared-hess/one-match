@@ -11,7 +11,10 @@ const NORMAL_UI_COPY_REPLACEMENTS: Array<[RegExp, string]> = [
 ];
 
 export function normalUserCopy(value: string): string {
-  return NORMAL_UI_COPY_REPLACEMENTS.reduce((copy, [pattern, replacement]) => copy.replace(pattern, replacement), value);
+  return NORMAL_UI_COPY_REPLACEMENTS.reduce(
+    (copy, [pattern, replacement]) => copy.replace(pattern, replacement),
+    value
+  );
 }
 
 export function getNormalDisplayName(): string {

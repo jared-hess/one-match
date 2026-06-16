@@ -37,7 +37,11 @@ export function JaredRouteGuard({ children }: JaredRouteGuardProps) {
       ) : (
         <PageShell
           eyebrow={allowed === null ? 'Checking Jared access' : 'Jared only'}
-          title={allowed === null ? 'Verifying the protected workspace.' : 'This route is reserved for Jared.'}
+          title={
+            allowed === null
+              ? 'Verifying the protected workspace.'
+              : 'This route is reserved for Jared.'
+          }
           description={
             allowed === null
               ? 'The shell is confirming profile role before rendering Jared tools.'

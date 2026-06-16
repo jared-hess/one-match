@@ -1,7 +1,11 @@
 import { createBrowserRouter, createMemoryRouter, type RouteObject } from 'react-router-dom';
 import { AppShell } from './components/AppShell';
 import { AuthCallbackPage } from './routes/AuthCallbackPage';
-import { jaredRouteConfigs, normalRouteConfigs, renderConfiguredRoute } from './routes/routeContent';
+import {
+  jaredRouteConfigs,
+  normalRouteConfigs,
+  renderConfiguredRoute
+} from './routes/routeContent';
 
 export const appRouteObjects: RouteObject[] = [
   {

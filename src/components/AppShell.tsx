@@ -14,7 +14,9 @@ export function AppShell() {
               <CalendarHeart className="h-5 w-5" aria-hidden="true" />
             </span>
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.28em] text-blush-600">DateJared</p>
+              <p className="text-xs font-bold uppercase tracking-[0.28em] text-blush-600">
+                DateJared
+              </p>
               <p className="text-sm text-ink-600">Private MVP foundation</p>
             </div>
           </div>

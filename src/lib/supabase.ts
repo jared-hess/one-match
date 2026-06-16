@@ -1,6 +1,8 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
-export type PublicEnv = Partial<Record<'VITE_SUPABASE_URL' | 'VITE_SUPABASE_ANON_KEY' | 'VITE_SITE_URL', string>>;
+export type PublicEnv = Partial<
+  Record<'VITE_SUPABASE_URL' | 'VITE_SUPABASE_ANON_KEY' | 'VITE_SITE_URL', string>
+>;
 
 export type SupabaseAvailability =
   | {
@@ -62,7 +64,8 @@ export function getSupabaseAvailability(env: PublicEnv = import.meta.env): Supab
     return {
       available: false,
       client: null,
-      reason: 'Supabase is not configured yet. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to enable live auth and data.'
+      reason:
+        'Supabase is not configured yet. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to enable live auth and data.'
     };
   }
 
@@ -70,7 +73,8 @@ export function getSupabaseAvailability(env: PublicEnv = import.meta.env): Supab
     return {
       available: false,
       client: null,
-      reason: 'Supabase public environment values look like placeholders. Replace them with the project URL and anon key.'
+      reason:
+        'Supabase public environment values look like placeholders. Replace them with the project URL and anon key.'
     };
   }
 

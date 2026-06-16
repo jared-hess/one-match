@@ -29,7 +29,10 @@ export function MessageInput({ disabled, helperText, onSend }: MessageInputProps
   }
 
   return (
-    <form className="rounded-[1.75rem] border border-white/80 bg-white/86 p-3 shadow-card backdrop-blur-xl" onSubmit={handleSubmit}>
+    <form
+      className="rounded-[1.75rem] border border-white/80 bg-white/86 p-3 shadow-card backdrop-blur-xl"
+      onSubmit={handleSubmit}
+    >
       <label className="sr-only" htmlFor="message-body">
         Send a message...
       </label>

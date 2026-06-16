@@ -19,7 +19,8 @@ export const fallbackJaredProfiles: JaredProfile[] = [
     prompts: [
       {
         prompt: 'Ideal first date',
-        answer: 'Dinner somewhere with warm lighting, then a walk if neither of us has started checking the time.'
+        answer:
+          'Dinner somewhere with warm lighting, then a walk if neither of us has started checking the time.'
       },
       {
         prompt: 'A green flag I bring',
@@ -212,7 +213,8 @@ export const fallbackJaredProfiles: JaredProfile[] = [
       },
       {
         prompt: 'Together we could',
-        answer: 'Build a date around honesty, good conversation, and a plan that fits both of our lives.'
+        answer:
+          'Build a date around honesty, good conversation, and a plan that fits both of our lives.'
       }
     ],
     tags: ['steady', 'honest', 'thoughtful', 'Oakland'],

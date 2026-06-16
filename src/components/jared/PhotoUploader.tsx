@@ -9,7 +9,13 @@ type PhotoUploaderProps = {
   onMoveUrl: (fromIndex: number, toIndex: number) => void;
 };
 
-export function PhotoUploader({ profileId, imageUrls, onAddUrl, onRemoveUrl, onMoveUrl }: PhotoUploaderProps) {
+export function PhotoUploader({
+  profileId,
+  imageUrls,
+  onAddUrl,
+  onRemoveUrl,
+  onMoveUrl
+}: PhotoUploaderProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [manualUrl, setManualUrl] = useState('');
   const [status, setStatus] = useState<string | null>(null);
@@ -25,7 +31,10 @@ export function PhotoUploader({ profileId, imageUrls, onAddUrl, onRemoveUrl, onM
     }
 
     setStatus('Uploading photo to Jared profile storage…');
-    const result = await uploadJaredProfilePhoto(getJaredProfilePhotoStoragePath(profileId, file.name), file);
+    const result = await uploadJaredProfilePhoto(
+      getJaredProfilePhotoStoragePath(profileId, file.name),
+      file
+    );
 
     if (result.error) {
       setStatus(result.error.message);
@@ -59,10 +68,18 @@ export function PhotoUploader({ profileId, imageUrls, onAddUrl, onRemoveUrl, onM
     <section className="rounded-app border border-white/80 bg-white/84 p-5 shadow-card backdrop-blur-xl">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-xs font-extrabold uppercase tracking-[0.24em] text-blush-600">Photos</p>
-          <h2 className="mt-2 font-display text-3xl font-semibold leading-none tracking-[-0.04em] text-merlot-900">Upload, reorder, or paste URLs.</h2>
+          <p className="text-xs font-extrabold uppercase tracking-[0.24em] text-blush-600">
+            Photos
+          </p>
+          <h2 className="mt-2 font-display text-3xl font-semibold leading-none tracking-[-0.04em] text-merlot-900">
+            Upload, reorder, or paste URLs.
+          </h2>
         </div>
-        <button className="rounded-full bg-blush-500 px-4 py-2 text-sm font-extrabold text-cream-50 shadow-glow" onClick={() => inputRef.current?.click()} type="button">
+        <button
+          className="rounded-full bg-blush-500 px-4 py-2 text-sm font-extrabold text-cream-50 shadow-glow"
+          onClick={() => inputRef.current?.click()}
+          type="button"
+        >
           Upload
         </button>
       </div>
@@ -81,28 +98,57 @@ export function PhotoUploader({ profileId, imageUrls, onAddUrl, onRemoveUrl, onM
           type="url"
           value={manualUrl}
         />
-        <button className="rounded-full border border-blush-100 bg-cream-50/80 px-4 py-2 text-sm font-extrabold text-merlot-900" onClick={addManualUrl} type="button">
+        <button
+          className="rounded-full border border-blush-100 bg-cream-50/80 px-4 py-2 text-sm font-extrabold text-merlot-900"
+          onClick={addManualUrl}
+          type="button"
+        >
           Add URL
         </button>
       </div>
-      {status ? <p className="mt-3 rounded-3xl border border-blush-100 bg-cream-50/80 p-3 text-sm font-semibold text-ink-600">{status}</p> : null}
+      {status ? (
+        <p className="mt-3 rounded-3xl border border-blush-100 bg-cream-50/80 p-3 text-sm font-semibold text-ink-600">
+          {status}
+        </p>
+      ) : null}
       <div className="mt-5 grid gap-3 sm:grid-cols-2">
-        {imageUrls.length ? imageUrls.map((url, index) => (
-          <article className="overflow-hidden rounded-3xl border border-blush-100 bg-cream-50/80" key={`${url}-${index}`}>
-            <ProfilePhoto url={url} />
-            <div className="flex flex-wrap gap-2 p-3">
-              <button className="rounded-full border border-blush-100 px-3 py-1 text-xs font-extrabold text-ink-600" disabled={index === 0} onClick={() => onMoveUrl(index, index - 1)} type="button">
-                Up
-              </button>
-              <button className="rounded-full border border-blush-100 px-3 py-1 text-xs font-extrabold text-ink-600" disabled={index === imageUrls.length - 1} onClick={() => onMoveUrl(index, index + 1)} type="button">
-                Down
-              </button>
-              <button className="rounded-full bg-merlot-900 px-3 py-1 text-xs font-extrabold text-cream-50" onClick={() => onRemoveUrl(url)} type="button">
-                Remove
-              </button>
-            </div>
-          </article>
-        )) : <PhotoPlaceholder />}
+        {imageUrls.length ? (
+          imageUrls.map((url, index) => (
+            <article
+              className="overflow-hidden rounded-3xl border border-blush-100 bg-cream-50/80"
+              key={`${url}-${index}`}
+            >
+              <ProfilePhoto url={url} />
+              <div className="flex flex-wrap gap-2 p-3">
+                <button
+                  className="rounded-full border border-blush-100 px-3 py-1 text-xs font-extrabold text-ink-600"
+                  disabled={index === 0}
+                  onClick={() => onMoveUrl(index, index - 1)}
+                  type="button"
+                >
+                  Up
+                </button>
+                <button
+                  className="rounded-full border border-blush-100 px-3 py-1 text-xs font-extrabold text-ink-600"
+                  disabled={index === imageUrls.length - 1}
+                  onClick={() => onMoveUrl(index, index + 1)}
+                  type="button"
+                >
+                  Down
+                </button>
+                <button
+                  className="rounded-full bg-merlot-900 px-3 py-1 text-xs font-extrabold text-cream-50"
+                  onClick={() => onRemoveUrl(url)}
+                  type="button"
+                >
+                  Remove
+                </button>
+              </div>
+            </article>
+          ))
+        ) : (
+          <PhotoPlaceholder />
+        )}
       </div>
     </section>
   );
@@ -114,7 +160,12 @@ function ProfilePhoto({ url }: { url: string }) {
       <div className="absolute inset-0 flex items-center justify-center p-5 text-center text-xs font-extrabold uppercase leading-4 tracking-[0.18em] text-cream-50/86">
         Photo placeholder
       </div>
-      <img alt="Jared profile upload" className="relative h-full w-full object-cover" onError={(event) => event.currentTarget.classList.add('hidden')} src={url} />
+      <img
+        alt="Jared profile upload"
+        className="relative h-full w-full object-cover"
+        onError={(event) => event.currentTarget.classList.add('hidden')}
+        src={url}
+      />
     </div>
   );
 }

@@ -1,0 +1,8 @@
+node_modules
+dist
+coverage
+android
+.sisyphus
+package-lock.json
+.env
+.env.*

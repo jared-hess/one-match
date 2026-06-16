@@ -1,6 +1,17 @@
-import { createDemoMutationResult, createUnavailableMutationResult, isDemoModeEnabled } from './demoMode';
+import {
+  createDemoMutationResult,
+  createUnavailableMutationResult,
+  isDemoModeEnabled
+} from './demoMode';
 import { getSupabase } from './supabase';
-import type { Conversation, DemoAwareOptions, Message, MutationResult, Profile, Relationship } from '../types';
+import type {
+  Conversation,
+  DemoAwareOptions,
+  Message,
+  MutationResult,
+  Profile,
+  Relationship
+} from '../types';
 
 export type MessagingConversation = {
   conversation: Conversation;
@@ -38,16 +49,32 @@ function latestMessageFor(conversationId: string, messages: Message[]): Message 
   return messages.find((message) => message.conversation_id === conversationId) ?? null;
 }
 
-function unreadCountFor(conversationId: string, currentUserId: string | null, messages: Message[]): number {
+function unreadCountFor(
+  conversationId: string,
+  currentUserId: string | null,
+  messages: Message[]
+): number {
   if (!currentUserId) {
     return 0;
   }
 
-  return messages.filter((message) => message.conversation_id === conversationId && message.sender_id !== currentUserId && !message.read_at).length;
+  return messages.filter(
+    (message) =>
+      message.conversation_id === conversationId &&
+      message.sender_id !== currentUserId &&
+      !message.read_at
+  ).length;
 }
 
-export function isMatchedOpenConversation(relationship: Relationship, conversation: Conversation): boolean {
-  return relationship.id === conversation.relationship_id && relationship.status === 'matched' && conversation.status === 'open';
+export function isMatchedOpenConversation(
+  relationship: Relationship,
+  conversation: Conversation
+): boolean {
+  return (
+    relationship.id === conversation.relationship_id &&
+    relationship.status === 'matched' &&
+    conversation.status === 'open'
+  );
 }
 
 async function getCurrentUserId(): Promise<string | null> {
@@ -92,7 +119,10 @@ async function fetchRelationshipsByIds(relationshipIds: string[]): Promise<Relat
     return [];
   }
 
-  const { data, error } = await supabase.client.from('relationships').select('*').in('id', relationshipIds);
+  const { data, error } = await supabase.client
+    .from('relationships')
+    .select('*')
+    .in('id', relationshipIds);
 
   if (error) {
     throw error;
@@ -154,7 +184,10 @@ export async function fetchConversations(): Promise<Conversation[]> {
     return [];
   }
 
-  const { data, error } = await supabase.client.from('conversations').select('*').order('updated_at', { ascending: false });
+  const { data, error } = await supabase.client
+    .from('conversations')
+    .select('*')
+    .order('updated_at', { ascending: false });
 
   if (error) {
     throw error;
@@ -188,22 +221,36 @@ export async function fetchJaredMessagingConversations(): Promise<MessagingConve
   }
 
   const openConversations = conversations ?? [];
-  const relationshipIds = uniqueValues(openConversations.map((conversation) => conversation.relationship_id));
+  const relationshipIds = uniqueValues(
+    openConversations.map((conversation) => conversation.relationship_id)
+  );
   const userIds = uniqueValues(openConversations.map((conversation) => conversation.user_id));
   const [relationships, profiles, latestMessages] = await Promise.all([
     fetchRelationshipsByIds(relationshipIds),
     fetchProfilesByUserIds(userIds),
     fetchLatestMessagesForConversations(openConversations.map((conversation) => conversation.id))
   ]);
-  const relationshipsById = new Map(relationships.map((relationship) => [relationship.id, relationship]));
+  const relationshipsById = new Map(
+    relationships.map((relationship) => [relationship.id, relationship])
+  );
   const profilesByUserId = new Map(profiles.map((profile) => [profile.user_id, profile]));
 
   return openConversations
-    .map((conversation) => buildMessagingConversation(conversation, relationshipsById, profilesByUserId, latestMessages, currentUserId))
+    .map((conversation) =>
+      buildMessagingConversation(
+        conversation,
+        relationshipsById,
+        profilesByUserId,
+        latestMessages,
+        currentUserId
+      )
+    )
     .filter((item): item is MessagingConversation => Boolean(item));
 }
 
-export async function fetchJaredMessagingConversation(conversationId: string): Promise<MessagingConversation | null> {
+export async function fetchJaredMessagingConversation(
+  conversationId: string
+): Promise<MessagingConversation | null> {
   const supabase = getSupabase();
 
   if (!supabase.available) {
@@ -277,7 +324,9 @@ export async function fetchNormalMessagingState(): Promise<NormalMessagingState>
     throw relationshipError;
   }
 
-  const matchedRelationship = relationships?.find((relationship) => relationship.status === 'matched');
+  const matchedRelationship = relationships?.find(
+    (relationship) => relationship.status === 'matched'
+  );
 
   if (!matchedRelationship) {
     return {
@@ -304,7 +353,8 @@ export async function fetchNormalMessagingState(): Promise<NormalMessagingState>
       state: 'blocked',
       currentUserId,
       title: 'You and Jared matched',
-      description: 'The conversation is not open yet, so messaging stays unavailable and no duplicate conversation is created.'
+      description:
+        'The conversation is not open yet, so messaging stays unavailable and no duplicate conversation is created.'
     };
   }
 
@@ -407,7 +457,9 @@ export async function sendMessage(
   }
 
   if (!(await canSendMessage(conversationId, senderId))) {
-    return createUnavailableMutationResult('Messaging is available only for matched relationships with open conversations.');
+    return createUnavailableMutationResult(
+      'Messaging is available only for matched relationships with open conversations.'
+    );
   }
 
   const { data, error } = await supabase.client
@@ -437,7 +489,9 @@ export async function sendCurrentUserMessage(
   return sendMessage(conversationId, currentUserId, body, options);
 }
 
-export async function markReceivedMessagesRead(conversationId: string): Promise<MutationResult<Message[]>> {
+export async function markReceivedMessagesRead(
+  conversationId: string
+): Promise<MutationResult<Message[]>> {
   const supabase = getSupabase();
 
   if (!supabase.available) {
@@ -460,7 +514,10 @@ export async function markReceivedMessagesRead(conversationId: string): Promise<
   return { data: data ?? null, error, demoMode: false };
 }
 
-export function subscribeToConversationMessages(conversationId: string, onChange: () => void): MessageSubscription {
+export function subscribeToConversationMessages(
+  conversationId: string,
+  onChange: () => void
+): MessageSubscription {
   const supabase = getSupabase();
 
   if (!supabase.available) {

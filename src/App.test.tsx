@@ -22,14 +22,39 @@ import {
 } from './lib/demoMode';
 import { createJaredProfile } from './lib/jaredProfiles';
 import { isMatchedOpenConversation, sendMessage } from './lib/messages';
-import { addJaredNote, isProfileCompleteForJared, matchRelationshipBack } from './lib/relationships';
-import { getJaredProfilePhotoStoragePath, JARED_PROFILE_PHOTOS_BUCKET, uploadJaredProfilePhoto } from './lib/storage';
-import { getLocalSwipes, getQueuedSwipes, LOCAL_SWIPES_KEY, QUEUED_SWIPES_KEY, recordAnonymousSwipe, recordSwipe, VIEWED_COUNT_KEY } from './lib/swipes';
+import {
+  addJaredNote,
+  isProfileCompleteForJared,
+  matchRelationshipBack
+} from './lib/relationships';
+import {
+  getJaredProfilePhotoStoragePath,
+  JARED_PROFILE_PHOTOS_BUCKET,
+  uploadJaredProfilePhoto
+} from './lib/storage';
+import {
+  getLocalSwipes,
+  getQueuedSwipes,
+  LOCAL_SWIPES_KEY,
+  QUEUED_SWIPES_KEY,
+  recordAnonymousSwipe,
+  recordSwipe,
+  VIEWED_COUNT_KEY
+} from './lib/swipes';
 import { getSupabaseAvailability } from './lib/supabase';
 import { createTestRouter } from './router';
-import type { Conversation, InboundRelationshipContext, JaredProfileInsert, JaredProfileUpdate, Message, Relationship } from './types';
+import type {
+  Conversation,
+  InboundRelationshipContext,
+  JaredProfileInsert,
+  JaredProfileUpdate,
+  Message,
+  Relationship
+} from './types';
 
-function createInboundContext(overrides: Partial<InboundRelationshipContext> = {}): InboundRelationshipContext {
+function createInboundContext(
+  overrides: Partial<InboundRelationshipContext> = {}
+): InboundRelationshipContext {
   return {
     relationship: {
       id: 'relationship-id',
@@ -120,7 +145,9 @@ describe('App', () => {
 
     expect(screen.getAllByText('DateJared').length).toBeGreaterThan(0);
     expect(screen.getByRole('heading', { name: /dating, optimized/i })).toBeInTheDocument();
-    expect(screen.getByText(/focused discovery experience designed to reduce romantic decision fatigue/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/focused discovery experience designed to reduce romantic decision fatigue/i)
+    ).toBeInTheDocument();
     expect(screen.queryByText(/exactly one person/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/browse Jared profiles/i)).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /jared/i })).not.toBeInTheDocument();
@@ -168,7 +195,9 @@ describe('App', () => {
   it('gives anonymous delete-data visitors clear non-writing guidance', async () => {
     render(<RouterProvider router={createTestRouter(['/delete-data'])} />);
 
-    expect(screen.getByRole('heading', { name: /request account and data deletion/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: /request account and data deletion/i })
+    ).toBeInTheDocument();
     expect(await screen.findByText(/Sign in with Google first/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /request deletion/i })).toBeDisabled();
   });
@@ -185,14 +214,20 @@ describe('App', () => {
   it('renders the swipe route without requiring sign-in', async () => {
     render(<RouterProvider router={createTestRouter(['/swipe'])} />);
 
-    expect(await screen.findByRole('heading', { name: /choose deliberately/i })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: /choose deliberately/i })
+    ).toBeInTheDocument();
     expect(screen.getByText(/likes do not open chat/i)).toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: /waiting for Supabase keys/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('heading', { name: /waiting for Supabase keys/i })
+    ).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /jared/i })).not.toBeInTheDocument();
   });
 
   it('renders Jared profile details without internal labels or slugs', async () => {
-    render(<RouterProvider router={createTestRouter([`/profile/${fallbackJaredProfiles[0].id}`])} />);
+    render(
+      <RouterProvider router={createTestRouter([`/profile/${fallbackJaredProfiles[0].id}`])} />
+    );
 
     expect(await screen.findByRole('heading', { name: /jared, 30-ish/i })).toBeInTheDocument();
     expect(screen.getAllByText('Oakland').length).toBeGreaterThan(0);
@@ -207,14 +242,18 @@ describe('App', () => {
     const detailLink = await screen.findByRole('link', { name: /read the profile/i });
     expect(detailLink).toHaveAttribute('href', `/profile/${fallbackJaredProfiles[0].id}`);
     expect(fallbackJaredProfiles[0].id).toMatch(/^[0-9a-f-]{36}$/);
-    expect(detailLink.getAttribute('href')).not.toMatch(/jared-dinner-conversation|fallback-jared/i);
+    expect(detailLink.getAttribute('href')).not.toMatch(
+      /jared-dinner-conversation|fallback-jared/i
+    );
   });
 
   it('hardcodes the normal visible display name even if profile data changes', async () => {
     const originalName = fallbackJaredProfiles[0].display_name;
     fallbackJaredProfiles[0].display_name = 'Internal Alternate Name';
 
-    render(<RouterProvider router={createTestRouter([`/profile/${fallbackJaredProfiles[0].id}`])} />);
+    render(
+      <RouterProvider router={createTestRouter([`/profile/${fallbackJaredProfiles[0].id}`])} />
+    );
 
     expect(await screen.findByRole('heading', { name: /jared, 30-ish/i })).toBeInTheDocument();
     expect(screen.queryByText(/Internal Alternate Name/i)).not.toBeInTheDocument();
@@ -234,24 +273,38 @@ describe('App', () => {
   it('keeps Jared workspace routes behind the existing guard when Supabase is unavailable', async () => {
     render(<RouterProvider router={createTestRouter(['/jared'])} />);
 
-    expect(await screen.findByRole('heading', { name: /live datejared is waiting for supabase keys/i })).toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: /private control room/i })).not.toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: /live datejared is waiting for supabase keys/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('heading', { name: /private control room/i })
+    ).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /open inbound likes/i })).not.toBeInTheDocument();
   });
 
   it('keeps normal settings behind auth when Supabase is unavailable', async () => {
     render(<RouterProvider router={createTestRouter(['/settings'])} />);
 
-    expect(await screen.findByRole('heading', { name: /live datejared is waiting for supabase keys/i })).toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: /account and safety controls/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /request account deletion/i })).not.toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: /live datejared is waiting for supabase keys/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('heading', { name: /account and safety controls/i })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /request account deletion/i })
+    ).not.toBeInTheDocument();
   });
 
   it('keeps Jared settings deletion requests behind the existing guard when Supabase is unavailable', async () => {
     render(<RouterProvider router={createTestRouter(['/jared/settings'])} />);
 
-    expect(await screen.findByRole('heading', { name: /live datejared is waiting for supabase keys/i })).toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: /workspace safety controls/i })).not.toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: /live datejared is waiting for supabase keys/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('heading', { name: /workspace safety controls/i })
+    ).not.toBeInTheDocument();
     expect(screen.queryByText(/deletion request/i)).not.toBeInTheDocument();
   });
 
@@ -299,7 +352,9 @@ describe('App', () => {
       />
     );
 
-    expect(screen.getByText(/liked: dinner \/ conversation jared, systems \/ software jared/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/liked: dinner \/ conversation jared, systems \/ software jared/i)
+    ).toBeInTheDocument();
     expect(screen.getByText(/passed: cooking \/ home jared/i)).toBeInTheDocument();
     expect(screen.getByText(/no photo shared/i)).toBeInTheDocument();
   });
@@ -372,7 +427,10 @@ describe('App', () => {
 
     render(
       <MemoryRouter>
-        <JaredProfileForm onSubmit={onSubmit} profile={{ ...fallbackJaredProfiles[0], active: true, archived: false }} />
+        <JaredProfileForm
+          onSubmit={onSubmit}
+          profile={{ ...fallbackJaredProfiles[0], active: true, archived: false }}
+        />
       </MemoryRouter>
     );
 
@@ -440,7 +498,13 @@ describe('App', () => {
 
     render(
       <ChatThread
-        conversation={{ conversation, relationship: pendingRelationship, userProfile: null, latestMessage: null, unreadCount: 0 }}
+        conversation={{
+          conversation,
+          relationship: pendingRelationship,
+          userProfile: null,
+          latestMessage: null,
+          unreadCount: 0
+        }}
         currentUserId="user-id"
         disabledReason="Messaging opens only after You and Jared matched."
         messages={[]}
@@ -461,11 +525,22 @@ describe('App', () => {
     const conversation = createConversation();
 
     expect(isMatchedOpenConversation(relationship, conversation)).toBe(true);
-    expect(isMatchedOpenConversation(createRelationship({ status: 'pending' }), conversation)).toBe(false);
-    expect(isMatchedOpenConversation(relationship, createConversation({ status: 'archived' }))).toBe(false);
-    expect(isMatchedOpenConversation(relationship, createConversation({ relationship_id: 'different-relationship' }))).toBe(false);
+    expect(isMatchedOpenConversation(createRelationship({ status: 'pending' }), conversation)).toBe(
+      false
+    );
+    expect(
+      isMatchedOpenConversation(relationship, createConversation({ status: 'archived' }))
+    ).toBe(false);
+    expect(
+      isMatchedOpenConversation(
+        relationship,
+        createConversation({ relationship_id: 'different-relationship' })
+      )
+    ).toBe(false);
 
-    const demoResult = await sendMessage(conversation.id, 'user-id', '  Hi Jared  ', { demoMode: true });
+    const demoResult = await sendMessage(conversation.id, 'user-id', '  Hi Jared  ', {
+      demoMode: true
+    });
     expect(demoResult.demoMode).toBe(true);
     expect(demoResult.error).toBeNull();
   });
@@ -476,10 +551,19 @@ describe('App', () => {
 
     render(
       <ChatThread
-        conversation={{ conversation, relationship, userProfile: createInboundContext().userProfile, latestMessage: null, unreadCount: 0 }}
+        conversation={{
+          conversation,
+          relationship,
+          userProfile: createInboundContext().userProfile,
+          latestMessage: null,
+          unreadCount: 0
+        }}
         currentUserId="jared-user-id"
         disabledReason="Jared replies only when matched and open."
-        messages={[createMessage(), createMessage({ id: 'jared-message-id', sender_id: 'jared-user-id', body: 'Hi Ari' })]}
+        messages={[
+          createMessage(),
+          createMessage({ id: 'jared-message-id', sender_id: 'jared-user-id', body: 'Hi Ari' })
+        ]}
         onRefresh={() => undefined}
         onSend={async () => undefined}
         statusText="Live updates are on for this conversation."
@@ -538,7 +622,12 @@ describe('App', () => {
     const deck = buildJaredDemoDeck(
       [
         ...fallbackJaredProfiles,
-        { ...fallbackJaredProfiles[0], id: 'private-ineligible', sort_order: 1, demo_eligible: false },
+        {
+          ...fallbackJaredProfiles[0],
+          id: 'private-ineligible',
+          sort_order: 1,
+          demo_eligible: false
+        },
         { ...fallbackJaredProfiles[1], id: 'archived-ineligible', sort_order: 2, archived: true }
       ],
       7
@@ -546,7 +635,9 @@ describe('App', () => {
 
     expect(state.deckSize).toBe(7);
     expect(deck).toHaveLength(7);
-    expect(deck.every((profile) => profile.demo_eligible && profile.active && !profile.archived)).toBe(true);
+    expect(
+      deck.every((profile) => profile.demo_eligible && profile.active && !profile.archived)
+    ).toBe(true);
     expect(window.localStorage.getItem(JARED_DEMO_STATE_KEY)).toContain('"deckSize":7');
     expect(window.localStorage.getItem(LOCAL_SWIPES_KEY)).toBeNull();
     expect(window.localStorage.getItem(QUEUED_SWIPES_KEY)).toBeNull();
@@ -581,7 +672,14 @@ describe('App', () => {
   it('renders deck size choices and resets local demo state instantly', () => {
     const onDeckSizeChange = vi.fn((deckSize) => resetJaredDemoState(deckSize));
 
-    render(<DemoLauncher availableProfiles={10} deckSize={5} onDeckSizeChange={onDeckSizeChange} onStart={() => undefined} />);
+    render(
+      <DemoLauncher
+        availableProfiles={10}
+        deckSize={5}
+        onDeckSizeChange={onDeckSizeChange}
+        onStart={() => undefined}
+      />
+    );
 
     fireEvent.click(screen.getByRole('button', { name: /7 cards/i }));
 
@@ -604,12 +702,19 @@ describe('App', () => {
 
     render(
       <MemoryRouter>
-        <DemoCompletionScreen canShare={false} onEndDemo={onEndDemo} onShare={onShare} shareStatus="Share Link is unavailable in this browser." />
+        <DemoCompletionScreen
+          canShare={false}
+          onEndDemo={onEndDemo}
+          onShare={onShare}
+          shareStatus="Share Link is unavailable in this browser."
+        />
       </MemoryRouter>
     );
 
     expect(screen.getByText('Demo complete')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: /candidate pool evaluation complete/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: /candidate pool evaluation complete/i })
+    ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /end demo/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /open public app/i })).toHaveAttribute('href', '/');
     expect(screen.getByRole('button', { name: /share link/i })).toBeDisabled();
@@ -621,7 +726,12 @@ describe('App', () => {
 
     render(
       <MemoryRouter>
-        <DemoCompletionScreen canShare={false} onEndDemo={endJaredDemoMode} onShare={() => undefined} shareStatus="Share Link is unavailable in this browser." />
+        <DemoCompletionScreen
+          canShare={false}
+          onEndDemo={endJaredDemoMode}
+          onShare={() => undefined}
+          shareStatus="Share Link is unavailable in this browser."
+        />
       </MemoryRouter>
     );
 

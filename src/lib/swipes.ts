@@ -1,4 +1,8 @@
-import { createDemoMutationResult, createUnavailableMutationResult, isDemoModeEnabled } from './demoMode';
+import {
+  createDemoMutationResult,
+  createUnavailableMutationResult,
+  isDemoModeEnabled
+} from './demoMode';
 import { getSupabase } from './supabase';
 import type { DemoAwareOptions, MutationResult, Swipe, SwipeDirection } from '../types';
 
@@ -56,7 +60,10 @@ export function acknowledgeSimilarityModal() {
   writeJson(SIMILARITY_ACKNOWLEDGED_KEY, true);
 }
 
-export function recordAnonymousSwipe(jaredProfileId: string, direction: SwipeDirection): QueuedSwipe[] {
+export function recordAnonymousSwipe(
+  jaredProfileId: string,
+  direction: SwipeDirection
+): QueuedSwipe[] {
   const viewedCount = getViewedCount() + 1;
   writeJson(VIEWED_COUNT_KEY, viewedCount);
 
@@ -66,20 +73,30 @@ export function recordAnonymousSwipe(jaredProfileId: string, direction: SwipeDir
     queuedAt: new Date().toISOString()
   };
 
-  const nextLocalSwipes = [...getLocalSwipes().filter((localSwipe) => localSwipe.jaredProfileId !== jaredProfileId), swipe];
+  const nextLocalSwipes = [
+    ...getLocalSwipes().filter((localSwipe) => localSwipe.jaredProfileId !== jaredProfileId),
+    swipe
+  ];
   writeJson(LOCAL_SWIPES_KEY, nextLocalSwipes);
 
   if (direction === 'left') {
     return getQueuedSwipes();
   }
 
-  const nextQueue = [...getQueuedSwipes().filter((queuedSwipe) => queuedSwipe.jaredProfileId !== jaredProfileId), swipe];
+  const nextQueue = [
+    ...getQueuedSwipes().filter((queuedSwipe) => queuedSwipe.jaredProfileId !== jaredProfileId),
+    swipe
+  ];
   writeJson(QUEUED_SWIPES_KEY, nextQueue);
 
   return nextQueue;
 }
 
-export async function replayQueuedSwipes(): Promise<{ replayed: number; retained: QueuedSwipe[]; reason?: string }> {
+export async function replayQueuedSwipes(): Promise<{
+  replayed: number;
+  retained: QueuedSwipe[];
+  reason?: string;
+}> {
   const queuedSwipes = getQueuedSwipes();
   const retained: QueuedSwipe[] = [];
   let replayed = 0;
@@ -100,7 +117,9 @@ export async function replayQueuedSwipes(): Promise<{ replayed: number; retained
   return {
     replayed,
     retained,
-    reason: retained.length ? 'Queued likes are saved locally until live data is available.' : undefined
+    reason: retained.length
+      ? 'Queued likes are saved locally until live data is available.'
+      : undefined
   };
 }
 

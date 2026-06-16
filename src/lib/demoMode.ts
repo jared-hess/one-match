@@ -128,7 +128,10 @@ export function endJaredDemoMode(): JaredDemoState {
   return defaultDemoState();
 }
 
-export function recordJaredDemoSwipe(jaredProfileId: string, direction: SwipeDirection): JaredDemoState {
+export function recordJaredDemoSwipe(
+  jaredProfileId: string,
+  direction: SwipeDirection
+): JaredDemoState {
   const currentState = getJaredDemoState();
   const viewedProfileIds = currentState.viewedProfileIds.includes(jaredProfileId)
     ? currentState.viewedProfileIds
@@ -167,10 +170,16 @@ export function getDemoEligibleJaredProfiles(profiles: JaredProfile[]): JaredPro
     .sort((first, second) => first.sort_order - second.sort_order);
 }
 
-export function buildJaredDemoDeck(profiles: JaredProfile[], deckSize: DemoDeckSize): JaredProfile[] {
+export function buildJaredDemoDeck(
+  profiles: JaredProfile[],
+  deckSize: DemoDeckSize
+): JaredProfile[] {
   const eligibleProfiles = getDemoEligibleJaredProfiles(profiles);
   const fallbackEligibleProfiles = getDemoEligibleJaredProfiles(fallbackJaredProfiles);
-  const pool = eligibleProfiles.length >= deckSize ? eligibleProfiles : [...eligibleProfiles, ...fallbackEligibleProfiles];
+  const pool =
+    eligibleProfiles.length >= deckSize
+      ? eligibleProfiles
+      : [...eligibleProfiles, ...fallbackEligibleProfiles];
   const uniqueProfiles = [...new Map(pool.map((profile) => [profile.id, profile])).values()];
 
   return uniqueProfiles.slice(0, deckSize);

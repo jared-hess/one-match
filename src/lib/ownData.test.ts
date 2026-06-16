@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createOwnDeletionRequest, fetchDeletionRequestsForJared, fetchOwnDeletionRequests, updateDeletionRequestForJared } from './deletionRequests';
+import {
+  createOwnDeletionRequest,
+  fetchDeletionRequestsForJared,
+  fetchOwnDeletionRequests,
+  updateDeletionRequestForJared
+} from './deletionRequests';
 import { fetchOwnProfile } from './profiles';
 import { fetchOwnRelationships } from './relationships';
 
@@ -95,7 +100,11 @@ describe('own data access', () => {
       url: 'https://example.supabase.co'
     });
 
-    await expect(createOwnDeletionRequest()).resolves.toMatchObject({ data: request, error: null, demoMode: false });
+    await expect(createOwnDeletionRequest()).resolves.toMatchObject({
+      data: request,
+      error: null,
+      demoMode: false
+    });
     expect(getUser).toHaveBeenCalledTimes(1);
     expect(rpc).toHaveBeenCalledWith('request_deletion');
   });
@@ -188,7 +197,10 @@ describe('own data access', () => {
       url: 'https://example.supabase.co'
     });
 
-    await updateDeletionRequestForJared('request-2', { status: 'completed', notes: 'Handled in Supabase.' });
+    await updateDeletionRequestForJared('request-2', {
+      status: 'completed',
+      notes: 'Handled in Supabase.'
+    });
 
     expect(update).toHaveBeenCalledWith(
       expect.objectContaining({

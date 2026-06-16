@@ -24,7 +24,10 @@ export function SwipeCard({ profile, isPeek = false }: SwipeCardProps) {
           {getNormalDisplayName()}, {profile.age_label}
         </h2>
         {!isPeek ? (
-          <Link className="mt-6 inline-flex text-sm font-extrabold text-cream-50 underline decoration-blush-100/70 underline-offset-4" to={`/profile/${profile.id}`}>
+          <Link
+            className="mt-6 inline-flex text-sm font-extrabold text-cream-50 underline decoration-blush-100/70 underline-offset-4"
+            to={`/profile/${profile.id}`}
+          >
             Read the profile
           </Link>
         ) : null}

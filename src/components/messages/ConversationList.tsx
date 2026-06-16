@@ -19,7 +19,10 @@ export function ConversationList({ conversations, basePath }: ConversationListPr
     return (
       <div className="rounded-app border border-blush-100 bg-cream-50/80 p-5 text-sm leading-6 text-ink-600">
         <p className="font-bold text-ink-900">Start the conversation</p>
-        <p className="mt-2">Matched, open conversations will appear here. Pending and archived relationships do not unlock messaging.</p>
+        <p className="mt-2">
+          Matched, open conversations will appear here. Pending and archived relationships do not
+          unlock messaging.
+        </p>
       </div>
     );
   }
@@ -34,14 +37,22 @@ export function ConversationList({ conversations, basePath }: ConversationListPr
         >
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-blush-600">You and Jared matched</p>
-              <h2 className="mt-2 font-display text-3xl font-semibold leading-none tracking-[-0.04em] text-merlot-900">{displayName(item)}</h2>
+              <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-blush-600">
+                You and Jared matched
+              </p>
+              <h2 className="mt-2 font-display text-3xl font-semibold leading-none tracking-[-0.04em] text-merlot-900">
+                {displayName(item)}
+              </h2>
             </div>
             {item.unreadCount ? (
-              <span className="rounded-full bg-blush-500 px-3 py-1 text-xs font-extrabold text-cream-50">{item.unreadCount}</span>
+              <span className="rounded-full bg-blush-500 px-3 py-1 text-xs font-extrabold text-cream-50">
+                {item.unreadCount}
+              </span>
             ) : null}
           </div>
-          <p className="mt-4 truncate rounded-3xl border border-blush-100 bg-cream-50/80 p-3 text-sm leading-6 text-ink-600">{previewText(item)}</p>
+          <p className="mt-4 truncate rounded-3xl border border-blush-100 bg-cream-50/80 p-3 text-sm leading-6 text-ink-600">
+            {previewText(item)}
+          </p>
         </Link>
       ))}
     </div>

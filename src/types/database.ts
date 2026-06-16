@@ -22,7 +22,9 @@ export type ProfileInsert = Partial<Omit<Profile, 'id' | 'created_at' | 'updated
   role?: 'user';
 };
 
-export type ProfileUpdate = Partial<Omit<Profile, 'id' | 'user_id' | 'created_at' | 'updated_at' | 'role'>> & {
+export type ProfileUpdate = Partial<
+  Omit<Profile, 'id' | 'user_id' | 'created_at' | 'updated_at' | 'role'>
+> & {
   role?: 'user';
 };
 

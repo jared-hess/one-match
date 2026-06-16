@@ -21,7 +21,10 @@ import {
   type DemoDeckSize,
   type JaredDemoState
 } from '../lib/demoMode';
-import { fetchDeletionRequestsForJared, updateDeletionRequestForJared } from '../lib/deletionRequests';
+import {
+  fetchDeletionRequestsForJared,
+  updateDeletionRequestForJared
+} from '../lib/deletionRequests';
 import {
   archiveJaredProfile,
   createJaredProfile,
@@ -39,8 +42,23 @@ import {
   subscribeToConversationMessages,
   type MessagingConversation
 } from '../lib/messages';
-import { addJaredNote, decideRelationship, fetchJaredInboundContext, fetchJaredInboundContexts, matchRelationshipBack } from '../lib/relationships';
-import type { DeletionRequest, DeletionRequestStatus, InboundRelationshipContext, JaredProfile, JaredProfileInsert, JaredProfileUpdate, Message, RelationshipStatus } from '../types';
+import {
+  addJaredNote,
+  decideRelationship,
+  fetchJaredInboundContext,
+  fetchJaredInboundContexts,
+  matchRelationshipBack
+} from '../lib/relationships';
+import type {
+  DeletionRequest,
+  DeletionRequestStatus,
+  InboundRelationshipContext,
+  JaredProfile,
+  JaredProfileInsert,
+  JaredProfileUpdate,
+  Message,
+  RelationshipStatus
+} from '../types';
 
 type DemoStage = 'launch' | 'swiping' | 'complete';
 
@@ -49,20 +67,25 @@ function useJaredContexts(status?: RelationshipStatus) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(async (showLoading = true) => {
-    if (showLoading) {
-      setLoading(true);
-    }
-    setError(null);
+  const load = useCallback(
+    async (showLoading = true) => {
+      if (showLoading) {
+        setLoading(true);
+      }
+      setError(null);
 
-    try {
-      setContexts(await fetchJaredInboundContexts(status));
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Unable to load Jared relationship context.');
-    } finally {
-      setLoading(false);
-    }
-  }, [status]);
+      try {
+        setContexts(await fetchJaredInboundContexts(status));
+      } catch (caught) {
+        setError(
+          caught instanceof Error ? caught.message : 'Unable to load Jared relationship context.'
+        );
+      } finally {
+        setLoading(false);
+      }
+    },
+    [status]
+  );
 
   useEffect(() => {
     let mounted = true;
@@ -75,7 +98,9 @@ function useJaredContexts(status?: RelationshipStatus) {
       })
       .catch((caught) => {
         if (mounted) {
-          setError(caught instanceof Error ? caught.message : 'Unable to load Jared relationship context.');
+          setError(
+            caught instanceof Error ? caught.message : 'Unable to load Jared relationship context.'
+          );
         }
       })
       .finally(() => {
@@ -126,18 +151,38 @@ export function JaredHomePage() {
     };
   }, []);
 
-  return <JaredHome activeProfiles={activeProfiles} matchedContexts={matched.contexts} pendingContexts={pending.contexts} />;
+  return (
+    <JaredHome
+      activeProfiles={activeProfiles}
+      matchedContexts={matched.contexts}
+      pendingContexts={pending.contexts}
+    />
+  );
 }
 
 export function JaredInboundPage() {
   const { contexts, loading, error } = useJaredContexts('pending');
 
   return (
-    <PageShell eyebrow="Inbound" title="Review the people who liked Jared." description="Pending relationships show Jared-only labels, profile context, timestamps, and private-note counts.">
+    <PageShell
+      eyebrow="Inbound"
+      title="Review the people who liked Jared."
+      description="Pending relationships show Jared-only labels, profile context, timestamps, and private-note counts."
+    >
       <div className="space-y-4">
-        {loading ? <EmptyJaredState title="Loading inbound likes" description="Checking the protected relationship queue." /> : null}
+        {loading ? (
+          <EmptyJaredState
+            title="Loading inbound likes"
+            description="Checking the protected relationship queue."
+          />
+        ) : null}
         {error ? <EmptyJaredState title="Inbound unavailable" description={error} /> : null}
-        {!loading && !error && !contexts.length ? <EmptyJaredState title="No pending likes" description="Supabase may be unavailable or every inbound relationship has already been decided." /> : null}
+        {!loading && !error && !contexts.length ? (
+          <EmptyJaredState
+            title="No pending likes"
+            description="Supabase may be unavailable or every inbound relationship has already been decided."
+          />
+        ) : null}
         {contexts.map((context) => (
           <InboundLikeCard context={context} key={context.relationship.id} />
         ))}
@@ -154,26 +199,29 @@ export function JaredInboundDetailPage() {
   const [status, setStatus] = useState('Choose Match Back, Pass, or Archive when ready.');
   const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(async (showLoading = true) => {
-    if (!id) {
-      setError('Missing relationship id.');
-      setLoading(false);
-      return;
-    }
+  const load = useCallback(
+    async (showLoading = true) => {
+      if (!id) {
+        setError('Missing relationship id.');
+        setLoading(false);
+        return;
+      }
 
-    if (showLoading) {
-      setLoading(true);
-    }
-    setError(null);
+      if (showLoading) {
+        setLoading(true);
+      }
+      setError(null);
 
-    try {
-      setContext(await fetchJaredInboundContext(id));
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Unable to load this inbound like.');
-    } finally {
-      setLoading(false);
-    }
-  }, [id]);
+      try {
+        setContext(await fetchJaredInboundContext(id));
+      } catch (caught) {
+        setError(caught instanceof Error ? caught.message : 'Unable to load this inbound like.');
+      } finally {
+        setLoading(false);
+      }
+    },
+    [id]
+  );
 
   useEffect(() => {
     let mounted = true;
@@ -218,14 +266,21 @@ export function JaredInboundDetailPage() {
     }
 
     setStatus('Saving Jared decision…');
-    const result = decision === 'matched' ? await matchRelationshipBack(id) : await decideRelationship(id, decision);
+    const result =
+      decision === 'matched'
+        ? await matchRelationshipBack(id)
+        : await decideRelationship(id, decision);
 
     if (result.error) {
       setStatus(result.error.message);
       return;
     }
 
-    setStatus(decision === 'matched' ? 'Matched and conversation opened.' : `Relationship marked ${decision}.`);
+    setStatus(
+      decision === 'matched'
+        ? 'Matched and conversation opened.'
+        : `Relationship marked ${decision}.`
+    );
     await load();
 
     if (decision !== 'matched') {
@@ -249,41 +304,87 @@ export function JaredInboundDetailPage() {
   }
 
   if (loading) {
-    return <PageShell eyebrow="Inbound detail" title="Loading this inbound like." description="Fetching protected Jared context." />;
+    return (
+      <PageShell
+        eyebrow="Inbound detail"
+        title="Loading this inbound like."
+        description="Fetching protected Jared context."
+      />
+    );
   }
 
   if (error || !context) {
     return (
-      <PageShell eyebrow="Inbound detail" title="This inbound like is unavailable." description={error ?? 'No relationship matched this id.'}>
-        <Link className="rounded-full bg-blush-500 px-5 py-3 text-sm font-extrabold text-cream-50 shadow-glow" to="/jared/inbound">Back to inbound</Link>
+      <PageShell
+        eyebrow="Inbound detail"
+        title="This inbound like is unavailable."
+        description={error ?? 'No relationship matched this id.'}
+      >
+        <Link
+          className="rounded-full bg-blush-500 px-5 py-3 text-sm font-extrabold text-cream-50 shadow-glow"
+          to="/jared/inbound"
+        >
+          Back to inbound
+        </Link>
       </PageShell>
     );
   }
 
-  return <InboundLikeDetail context={context} decisionStatus={status} onAddNote={handleAddNote} onDecide={handleDecision} />;
+  return (
+    <InboundLikeDetail
+      context={context}
+      decisionStatus={status}
+      onAddNote={handleAddNote}
+      onDecide={handleDecision}
+    />
+  );
 }
 
 export function JaredMatchesPage() {
   const { contexts, loading, error } = useJaredContexts('matched');
 
   return (
-    <PageShell eyebrow="Matches" title="Matched conversations are ready." description="This list shows match state with last-message and unread placeholders only; full messaging belongs to Task 7.">
+    <PageShell
+      eyebrow="Matches"
+      title="Matched conversations are ready."
+      description="This list shows match state with last-message and unread placeholders only; full messaging belongs to Task 7."
+    >
       <div className="space-y-4">
-        {loading ? <EmptyJaredState title="Loading matches" description="Checking matched relationships." /> : null}
+        {loading ? (
+          <EmptyJaredState title="Loading matches" description="Checking matched relationships." />
+        ) : null}
         {error ? <EmptyJaredState title="Matches unavailable" description={error} /> : null}
-        {!loading && !error && !contexts.length ? <EmptyJaredState title="No active matches" description="Match Back from inbound likes to open a conversation placeholder." /> : null}
+        {!loading && !error && !contexts.length ? (
+          <EmptyJaredState
+            title="No active matches"
+            description="Match Back from inbound likes to open a conversation placeholder."
+          />
+        ) : null}
         {contexts.map((context) => (
-          <article className="rounded-app border border-white/80 bg-white/84 p-5 shadow-card backdrop-blur-xl" key={context.relationship.id}>
+          <article
+            className="rounded-app border border-white/80 bg-white/84 p-5 shadow-card backdrop-blur-xl"
+            key={context.relationship.id}
+          >
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-xs font-extrabold uppercase tracking-[0.24em] text-blush-600">Matched user</p>
-                <h2 className="mt-2 font-display text-3xl font-semibold leading-none tracking-[-0.04em] text-merlot-900">{context.userProfile?.display_name ?? 'Unknown user'}</h2>
-                <p className="mt-2 text-sm text-ink-600">{context.userProfile?.city ?? 'City not shared'}</p>
+                <p className="text-xs font-extrabold uppercase tracking-[0.24em] text-blush-600">
+                  Matched user
+                </p>
+                <h2 className="mt-2 font-display text-3xl font-semibold leading-none tracking-[-0.04em] text-merlot-900">
+                  {context.userProfile?.display_name ?? 'Unknown user'}
+                </h2>
+                <p className="mt-2 text-sm text-ink-600">
+                  {context.userProfile?.city ?? 'City not shared'}
+                </p>
               </div>
               <RelationshipStatusBadge status={context.relationship.status} />
             </div>
-            <p className="mt-5 rounded-3xl border border-blush-100 bg-cream-50/80 p-4 text-sm leading-6 text-ink-600">Last-message placeholder: {context.latestMessage?.body ?? 'No messages yet.'}</p>
-            <p className="mt-3 text-sm font-bold text-blush-600">Unread placeholder: none calculated until Task 7.</p>
+            <p className="mt-5 rounded-3xl border border-blush-100 bg-cream-50/80 p-4 text-sm leading-6 text-ink-600">
+              Last-message placeholder: {context.latestMessage?.body ?? 'No messages yet.'}
+            </p>
+            <p className="mt-3 text-sm font-bold text-blush-600">
+              Unread placeholder: none calculated until Task 7.
+            </p>
           </article>
         ))}
       </div>
@@ -322,7 +423,9 @@ export function JaredMessagesPage() {
       })
       .catch((caught) => {
         if (mounted) {
-          setError(caught instanceof Error ? caught.message : 'Unable to load Jared conversations.');
+          setError(
+            caught instanceof Error ? caught.message : 'Unable to load Jared conversations.'
+          );
         }
       })
       .finally(() => {
@@ -337,12 +440,25 @@ export function JaredMessagesPage() {
   }, []);
 
   return (
-    <PageShell eyebrow="Jared messages" title="Reply only where the match is mutual." description="Jared sees open conversations created by the matched relationship contract—never pending likes or user-to-user threads.">
+    <PageShell
+      eyebrow="Jared messages"
+      title="Reply only where the match is mutual."
+      description="Jared sees open conversations created by the matched relationship contract—never pending likes or user-to-user threads."
+    >
       <div className="space-y-4">
-        {loading ? <EmptyJaredState title="Loading conversations" description="Checking open matched conversations." /> : null}
+        {loading ? (
+          <EmptyJaredState
+            title="Loading conversations"
+            description="Checking open matched conversations."
+          />
+        ) : null}
         {error ? <EmptyJaredState title="Messages unavailable" description={error} /> : null}
         <ConversationList basePath="/jared/messages" conversations={conversations} />
-        <button className="rounded-full border border-blush-100 bg-cream-50/80 px-4 py-2 text-sm font-extrabold text-blush-600" onClick={() => void load(false)} type="button">
+        <button
+          className="rounded-full border border-blush-100 bg-cream-50/80 px-4 py-2 text-sm font-extrabold text-blush-600"
+          onClick={() => void load(false)}
+          type="button"
+        >
           Refresh inbox
         </button>
       </div>
@@ -356,33 +472,38 @@ export function JaredMessagesDetailPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [realtimeText, setRealtimeText] = useState('Refresh is available if live updates are unavailable.');
+  const [realtimeText, setRealtimeText] = useState(
+    'Refresh is available if live updates are unavailable.'
+  );
 
-  const load = useCallback(async (showLoading = true) => {
-    if (!id) {
-      setError('Missing conversation id.');
-      setLoading(false);
-      return;
-    }
-
-    if (showLoading) {
-      setLoading(true);
-    }
-    setError(null);
-
-    try {
-      const nextConversation = await fetchJaredMessagingConversation(id);
-      setConversation(nextConversation);
-      setMessages(nextConversation ? await fetchMessages(nextConversation.conversation.id) : []);
-      if (nextConversation) {
-        void markReceivedMessagesRead(nextConversation.conversation.id);
+  const load = useCallback(
+    async (showLoading = true) => {
+      if (!id) {
+        setError('Missing conversation id.');
+        setLoading(false);
+        return;
       }
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Unable to load this conversation.');
-    } finally {
-      setLoading(false);
-    }
-  }, [id]);
+
+      if (showLoading) {
+        setLoading(true);
+      }
+      setError(null);
+
+      try {
+        const nextConversation = await fetchJaredMessagingConversation(id);
+        setConversation(nextConversation);
+        setMessages(nextConversation ? await fetchMessages(nextConversation.conversation.id) : []);
+        if (nextConversation) {
+          void markReceivedMessagesRead(nextConversation.conversation.id);
+        }
+      } catch (caught) {
+        setError(caught instanceof Error ? caught.message : 'Unable to load this conversation.');
+      } finally {
+        setLoading(false);
+      }
+    },
+    [id]
+  );
 
   useEffect(() => {
     let mounted = true;
@@ -401,7 +522,9 @@ export function JaredMessagesDetailPage() {
 
     fetchJaredMessagingConversation(id)
       .then(async (nextConversation) => {
-        const nextMessages = nextConversation ? await fetchMessages(nextConversation.conversation.id) : [];
+        const nextMessages = nextConversation
+          ? await fetchMessages(nextConversation.conversation.id)
+          : [];
         if (mounted) {
           setConversation(nextConversation);
           setMessages(nextMessages);
@@ -432,10 +555,18 @@ export function JaredMessagesDetailPage() {
     }
 
     const subscription = subscribeToConversationMessages(conversation.conversation.id, () => {
-      fetchMessages(conversation.conversation.id).then(setMessages).catch(() => setRealtimeText('Live update arrived, but refresh failed. Use Refresh to retry.'));
+      fetchMessages(conversation.conversation.id)
+        .then(setMessages)
+        .catch(() =>
+          setRealtimeText('Live update arrived, but refresh failed. Use Refresh to retry.')
+        );
     });
     Promise.resolve().then(() => {
-      setRealtimeText(subscription.realtime ? 'Live updates are on for this conversation.' : `Live updates unavailable: ${subscription.reason}. Use Refresh to check for replies.`);
+      setRealtimeText(
+        subscription.realtime
+          ? 'Live updates are on for this conversation.'
+          : `Live updates unavailable: ${subscription.reason}. Use Refresh to check for replies.`
+      );
     });
 
     return subscription.unsubscribe;
@@ -455,10 +586,24 @@ export function JaredMessagesDetailPage() {
   }
 
   return (
-    <PageShell eyebrow="Jared message detail" title="You and Jared matched" description="Jared replies only through the same matched/open conversation gate normal users use.">
-      {loading ? <EmptyJaredState title="Loading conversation" description="Checking relationship and conversation status before enabling replies." /> : null}
+    <PageShell
+      eyebrow="Jared message detail"
+      title="You and Jared matched"
+      description="Jared replies only through the same matched/open conversation gate normal users use."
+    >
+      {loading ? (
+        <EmptyJaredState
+          title="Loading conversation"
+          description="Checking relationship and conversation status before enabling replies."
+        />
+      ) : null}
       {error ? <EmptyJaredState title="Message thread unavailable" description={error} /> : null}
-      {!loading && !conversation ? <EmptyJaredState title="Start the conversation" description="No matched open conversation was found for this route." /> : null}
+      {!loading && !conversation ? (
+        <EmptyJaredState
+          title="Start the conversation"
+          description="No matched open conversation was found for this route."
+        />
+      ) : null}
       {conversation ? (
         <ChatThread
           conversation={conversation}
@@ -520,7 +665,10 @@ export function JaredProfilesPage() {
     };
   }, []);
 
-  async function handleMutation(action: () => Promise<{ error: Error | null; demoMode: boolean }>, fallbackStatus: string) {
+  async function handleMutation(
+    action: () => Promise<{ error: Error | null; demoMode: boolean }>,
+    fallbackStatus: string
+  ) {
     setStatus(null);
     const result = await action();
 
@@ -534,23 +682,63 @@ export function JaredProfilesPage() {
   }
 
   return (
-    <PageShell eyebrow="Jared profiles" title="Manage the swipe-deck versions of Jared." description="Create, pause, archive, reorder, and preview profiles without exposing CMS labels to normal users.">
+    <PageShell
+      eyebrow="Jared profiles"
+      title="Manage the swipe-deck versions of Jared."
+      description="Create, pause, archive, reorder, and preview profiles without exposing CMS labels to normal users."
+    >
       <div className="mb-5 flex flex-wrap gap-3">
-        <Link className="rounded-full bg-blush-500 px-5 py-3 text-sm font-extrabold text-cream-50 shadow-glow" to="/jared/profiles/new">
+        <Link
+          className="rounded-full bg-blush-500 px-5 py-3 text-sm font-extrabold text-cream-50 shadow-glow"
+          to="/jared/profiles/new"
+        >
           New profile
         </Link>
-        <button className="rounded-full border border-blush-100 bg-cream-50/80 px-5 py-3 text-sm font-extrabold text-merlot-900" onClick={() => void load(false)} type="button">
+        <button
+          className="rounded-full border border-blush-100 bg-cream-50/80 px-5 py-3 text-sm font-extrabold text-merlot-900"
+          onClick={() => void load(false)}
+          type="button"
+        >
           Refresh
         </button>
       </div>
-      {loading ? <EmptyJaredState title="Loading profiles" description="Checking the live CMS table for Jared profile rows." /> : null}
+      {loading ? (
+        <EmptyJaredState
+          title="Loading profiles"
+          description="Checking the live CMS table for Jared profile rows."
+        />
+      ) : null}
       {error ? <EmptyJaredState title="Profiles unavailable" description={error} /> : null}
       {status ? <EmptyJaredState title="Profile update" description={status} /> : null}
       <JaredProfileList
-        onArchive={(profile) => void handleMutation(() => archiveJaredProfile(profile.id), 'Profile archived without hard-deleting it.')}
-        onMove={(profile, direction) => void handleMutation(() => updateJaredProfileSortOrder(profiles, profile.id, direction), 'Profile sort order updated.')}
-        onToggleActive={(profile) => void handleMutation(() => updateJaredProfile(profile.id, { active: !profile.active, archived: profile.archived && !profile.active ? false : profile.archived }), 'Profile active state updated.')}
-        onToggleDemo={(profile) => void handleMutation(() => updateJaredProfile(profile.id, { demo_eligible: !profile.demo_eligible }), 'Profile demo eligibility updated.')}
+        onArchive={(profile) =>
+          void handleMutation(
+            () => archiveJaredProfile(profile.id),
+            'Profile archived without hard-deleting it.'
+          )
+        }
+        onMove={(profile, direction) =>
+          void handleMutation(
+            () => updateJaredProfileSortOrder(profiles, profile.id, direction),
+            'Profile sort order updated.'
+          )
+        }
+        onToggleActive={(profile) =>
+          void handleMutation(
+            () =>
+              updateJaredProfile(profile.id, {
+                active: !profile.active,
+                archived: profile.archived && !profile.active ? false : profile.archived
+              }),
+            'Profile active state updated.'
+          )
+        }
+        onToggleDemo={(profile) =>
+          void handleMutation(
+            () => updateJaredProfile(profile.id, { demo_eligible: !profile.demo_eligible }),
+            'Profile demo eligibility updated.'
+          )
+        }
         profiles={profiles}
       />
     </PageShell>
@@ -579,7 +767,11 @@ export function JaredProfileNewPage() {
   }
 
   return (
-    <PageShell eyebrow="New Jared profile" title="Create a new profile card." description="Draft profiles can stay inactive until Jared is ready to add them to the normal swipe deck.">
+    <PageShell
+      eyebrow="New Jared profile"
+      title="Create a new profile card."
+      description="Draft profiles can stay inactive until Jared is ready to add them to the normal swipe deck."
+    >
       {status ? <EmptyJaredState title="Create unavailable" description={status} /> : null}
       <JaredProfileForm onSubmit={handleCreate} profile={null} />
     </PageShell>
@@ -674,16 +866,33 @@ export function JaredProfileEditPage() {
   }
 
   return (
-    <PageShell eyebrow="Edit Jared profile" title="Tune one Jared profile." description="Profile edits stay in the data layer, and the preview uses the same surface normal users see.">
+    <PageShell
+      eyebrow="Edit Jared profile"
+      title="Tune one Jared profile."
+      description="Profile edits stay in the data layer, and the preview uses the same surface normal users see."
+    >
       <div className="mb-5 flex flex-wrap gap-3">
-        <Link className="rounded-full border border-blush-100 bg-cream-50/80 px-5 py-3 text-sm font-extrabold text-merlot-900" to="/jared/profiles">
+        <Link
+          className="rounded-full border border-blush-100 bg-cream-50/80 px-5 py-3 text-sm font-extrabold text-merlot-900"
+          to="/jared/profiles"
+        >
           Back to profiles
         </Link>
       </div>
-      {loading ? <EmptyJaredState title="Loading profile" description="Fetching the CMS row before opening the editor." /> : null}
+      {loading ? (
+        <EmptyJaredState
+          title="Loading profile"
+          description="Fetching the CMS row before opening the editor."
+        />
+      ) : null}
       {error ? <EmptyJaredState title="Profile unavailable" description={error} /> : null}
       {status ? <EmptyJaredState title="Profile save" description={status} /> : null}
-      {!loading && !profile ? <EmptyJaredState title="Profile not found" description="No Jared profile matched this id or slug." /> : null}
+      {!loading && !profile ? (
+        <EmptyJaredState
+          title="Profile not found"
+          description="No Jared profile matched this id or slug."
+        />
+      ) : null}
       {profile ? <JaredProfileForm onSubmit={handleUpdate} profile={profile} /> : null}
     </PageShell>
   );
@@ -693,7 +902,9 @@ export function JaredDemoPage() {
   const [demoState, setDemoState] = useState<JaredDemoState>(() => getJaredDemoState());
   const [stage, setStage] = useState<DemoStage>('launch');
   const [canShare, setCanShare] = useState(false);
-  const [shareStatus, setShareStatus] = useState('Share is available when this device supports native or web sharing.');
+  const [shareStatus, setShareStatus] = useState(
+    'Share is available when this device supports native or web sharing.'
+  );
 
   const demoProfiles = buildJaredDemoDeck([], demoState.deckSize);
   const eligibleCount = getDemoEligibleJaredProfiles([]).length;
@@ -717,7 +928,9 @@ export function JaredDemoPage() {
         }
       } catch {
         if (mounted) {
-          setShareStatus('Share Link is unavailable in this browser. Copy /jared/demo manually if needed.');
+          setShareStatus(
+            'Share Link is unavailable in this browser. Copy /jared/demo manually if needed.'
+          );
         }
       }
     }
@@ -748,7 +961,8 @@ export function JaredDemoPage() {
   }
 
   async function handleShare() {
-    const url = typeof window === 'undefined' ? '/jared/demo' : `${window.location.origin}/jared/demo`;
+    const url =
+      typeof window === 'undefined' ? '/jared/demo' : `${window.location.origin}/jared/demo`;
     const shareData = {
       title: 'DateJared demo',
       text: 'Open the guarded local-only DateJared demo.',
@@ -771,13 +985,28 @@ export function JaredDemoPage() {
   }
 
   if (stage === 'complete') {
-    return <DemoSwipeFlow canShare={canShare} onComplete={() => undefined} onEndDemo={handleEndDemo} onShare={() => void handleShare()} profiles={[]} shareStatus={shareStatus} state={demoState} />;
+    return (
+      <DemoSwipeFlow
+        canShare={canShare}
+        onComplete={() => undefined}
+        onEndDemo={handleEndDemo}
+        onShare={() => void handleShare()}
+        profiles={[]}
+        shareStatus={shareStatus}
+        state={demoState}
+      />
+    );
   }
 
   return (
     <div className="space-y-5">
       {stage === 'launch' ? (
-        <DemoLauncher availableProfiles={eligibleCount} deckSize={demoState.deckSize} onDeckSizeChange={handleDeckSizeChange} onStart={handleStart} />
+        <DemoLauncher
+          availableProfiles={eligibleCount}
+          deckSize={demoState.deckSize}
+          onDeckSizeChange={handleDeckSizeChange}
+          onStart={handleStart}
+        />
       ) : (
         <DemoSwipeFlow
           canShare={canShare}
@@ -825,7 +1054,9 @@ export function JaredSettingsPage() {
     }
 
     if (result.demoMode) {
-      setStatus('Demo mode did not update the deletion request. End demo mode before changing request status.');
+      setStatus(
+        'Demo mode did not update the deletion request. End demo mode before changing request status.'
+      );
       return;
     }
 
@@ -834,22 +1065,63 @@ export function JaredSettingsPage() {
   }
 
   return (
-    <PageShell eyebrow="Jared settings" title="Workspace safety controls" description="Account-level controls for Jared stay behind the existing role guard, including deletion request review.">
+    <PageShell
+      eyebrow="Jared settings"
+      title="Workspace safety controls"
+      description="Account-level controls for Jared stay behind the existing role guard, including deletion request review."
+    >
       <div className="space-y-4">
-        <EmptyJaredState title="Route guard" description="This route renders only after profiles.role is confirmed as jared." />
-        {loading ? <EmptyJaredState title="Loading deletion requests" description="Checking requested, completed, and cancelled account deletion records." /> : null}
-        {status ? <p className="rounded-3xl border border-blush-100 bg-cream-50/80 p-4 text-sm font-bold text-merlot-900" role="status">{status}</p> : null}
-        {!loading && !requests.length ? <EmptyJaredState title="No deletion requests" description="Signed-in user deletion requests will appear here after submission." /> : null}
+        <EmptyJaredState
+          title="Route guard"
+          description="This route renders only after profiles.role is confirmed as jared."
+        />
+        {loading ? (
+          <EmptyJaredState
+            title="Loading deletion requests"
+            description="Checking requested, completed, and cancelled account deletion records."
+          />
+        ) : null}
+        {status ? (
+          <p
+            className="rounded-3xl border border-blush-100 bg-cream-50/80 p-4 text-sm font-bold text-merlot-900"
+            role="status"
+          >
+            {status}
+          </p>
+        ) : null}
+        {!loading && !requests.length ? (
+          <EmptyJaredState
+            title="No deletion requests"
+            description="Signed-in user deletion requests will appear here after submission."
+          />
+        ) : null}
         {requests.map((request) => (
-          <article className="rounded-app border border-white/80 bg-white/84 p-5 shadow-card backdrop-blur-xl" key={request.id}>
+          <article
+            className="rounded-app border border-white/80 bg-white/84 p-5 shadow-card backdrop-blur-xl"
+            key={request.id}
+          >
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <p className="text-xs font-extrabold uppercase tracking-[0.24em] text-blush-600">Deletion request</p>
-                <h2 className="mt-2 font-display text-3xl font-semibold leading-none tracking-[-0.04em] text-merlot-900">{request.status}</h2>
+                <p className="text-xs font-extrabold uppercase tracking-[0.24em] text-blush-600">
+                  Deletion request
+                </p>
+                <h2 className="mt-2 font-display text-3xl font-semibold leading-none tracking-[-0.04em] text-merlot-900">
+                  {request.status}
+                </h2>
                 <p className="mt-2 text-sm leading-6 text-ink-600">User id: {request.user_id}</p>
-                <p className="text-sm leading-6 text-ink-600">Requested: {new Date(request.requested_at).toLocaleString()}</p>
-                {request.completed_at ? <p className="text-sm leading-6 text-ink-600">Completed: {new Date(request.completed_at).toLocaleString()}</p> : null}
-                {request.cancelled_at ? <p className="text-sm leading-6 text-ink-600">Cancelled: {new Date(request.cancelled_at).toLocaleString()}</p> : null}
+                <p className="text-sm leading-6 text-ink-600">
+                  Requested: {new Date(request.requested_at).toLocaleString()}
+                </p>
+                {request.completed_at ? (
+                  <p className="text-sm leading-6 text-ink-600">
+                    Completed: {new Date(request.completed_at).toLocaleString()}
+                  </p>
+                ) : null}
+                {request.cancelled_at ? (
+                  <p className="text-sm leading-6 text-ink-600">
+                    Cancelled: {new Date(request.cancelled_at).toLocaleString()}
+                  </p>
+                ) : null}
               </div>
               <div className="grid gap-2 sm:min-w-40">
                 {(['requested', 'completed', 'cancelled'] as const).map((nextStatus) => (

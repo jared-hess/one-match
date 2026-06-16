@@ -15,15 +15,27 @@ export function SwipeActions({ onAction }: SwipeActionsProps) {
   return (
     <fieldset className="mt-5 grid grid-cols-3 gap-3">
       <legend className="sr-only">Swipe actions</legend>
-      <button className={`rounded-3xl border px-4 py-4 transition ${actionStyles.left}`} onClick={() => onAction('left')} type="button">
+      <button
+        className={`rounded-3xl border px-4 py-4 transition ${actionStyles.left}`}
+        onClick={() => onAction('left')}
+        type="button"
+      >
         <X className="mx-auto h-6 w-6" aria-hidden="true" />
         <span className="mt-2 block text-xs font-extrabold uppercase tracking-[0.18em]">Pass</span>
       </button>
-      <button className={`rounded-3xl border px-4 py-4 transition ${actionStyles.right}`} onClick={() => onAction('right')} type="button">
+      <button
+        className={`rounded-3xl border px-4 py-4 transition ${actionStyles.right}`}
+        onClick={() => onAction('right')}
+        type="button"
+      >
         <Heart className="mx-auto h-6 w-6 fill-current" aria-hidden="true" />
         <span className="mt-2 block text-xs font-extrabold uppercase tracking-[0.18em]">Like</span>
       </button>
-      <button className={`rounded-3xl border px-4 py-4 transition ${actionStyles.super}`} onClick={() => onAction('super')} type="button">
+      <button
+        className={`rounded-3xl border px-4 py-4 transition ${actionStyles.super}`}
+        onClick={() => onAction('super')}
+        type="button"
+      >
         <Sparkles className="mx-auto h-6 w-6" aria-hidden="true" />
         <span className="mt-2 block text-xs font-extrabold uppercase tracking-[0.18em]">Super</span>
       </button>

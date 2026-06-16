@@ -21,7 +21,11 @@ export async function fetchOwnProfile(): Promise<Profile | null> {
     return null;
   }
 
-  const { data, error } = await supabase.client.from('profiles').select('*').eq('user_id', userId).maybeSingle();
+  const { data, error } = await supabase.client
+    .from('profiles')
+    .select('*')
+    .eq('user_id', userId)
+    .maybeSingle();
 
   if (error) {
     throw error;
@@ -30,7 +34,10 @@ export async function fetchOwnProfile(): Promise<Profile | null> {
   return data;
 }
 
-export async function upsertOwnProfile(input: OwnProfileUpsert, options?: DemoAwareOptions): Promise<MutationResult<Profile>> {
+export async function upsertOwnProfile(
+  input: OwnProfileUpsert,
+  options?: DemoAwareOptions
+): Promise<MutationResult<Profile>> {
   if (isDemoModeEnabled(options)) {
     return { data: null, error: null, demoMode: true };
   }
@@ -50,7 +57,10 @@ export async function upsertOwnProfile(input: OwnProfileUpsert, options?: DemoAw
   return { data, error, demoMode: false };
 }
 
-export async function updateOwnProfile(input: ProfileUpdate, options?: DemoAwareOptions): Promise<MutationResult<Profile>> {
+export async function updateOwnProfile(
+  input: ProfileUpdate,
+  options?: DemoAwareOptions
+): Promise<MutationResult<Profile>> {
   if (isDemoModeEnabled(options)) {
     return { data: null, error: null, demoMode: true };
   }

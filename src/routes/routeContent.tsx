@@ -116,7 +116,8 @@ export const normalRouteConfigs: RouteConfig[] = [
     guarded: 'auth',
     eyebrow: 'Settings',
     title: 'Account and safety controls.',
-    description: 'Protected normal-user settings for privacy boundaries, deletion requests, and sign-out.',
+    description:
+      'Protected normal-user settings for privacy boundaries, deletion requests, and sign-out.',
     note: 'Deletion requests use the shared data layer and remain tied to the signed-in account.',
     element: <SettingsPage />
   },
@@ -124,7 +125,8 @@ export const normalRouteConfigs: RouteConfig[] = [
     path: '/privacy',
     eyebrow: 'Privacy',
     title: 'Privacy Policy MVP.',
-    description: 'Plain-language privacy copy for DateJared adults-only account, profile, and deletion data.',
+    description:
+      'Plain-language privacy copy for DateJared adults-only account, profile, and deletion data.',
     note: 'This copy is not legal advice.',
     element: <PrivacyPage />
   },
@@ -132,7 +134,8 @@ export const normalRouteConfigs: RouteConfig[] = [
     path: '/terms',
     eyebrow: 'Terms',
     title: 'Terms of Service MVP.',
-    description: 'Plain-language expectations for adults-only account use, safety, and deletion requests.',
+    description:
+      'Plain-language expectations for adults-only account use, safety, and deletion requests.',
     note: 'This copy is not legal advice.',
     element: <TermsPage />
   },
@@ -140,7 +143,8 @@ export const normalRouteConfigs: RouteConfig[] = [
     path: '/delete-data',
     eyebrow: 'Delete data',
     title: 'Request account and data deletion.',
-    description: 'Signed-in users can submit deletion requests; anonymous visitors get clear sign-in guidance.',
+    description:
+      'Signed-in users can submit deletion requests; anonymous visitors get clear sign-in guidance.',
     note: 'Requests move through requested, completed, and cancelled states.',
     element: <DeleteDataPage />
   }
@@ -152,7 +156,8 @@ export const jaredRouteConfigs: RouteConfig[] = [
     guarded: 'jared',
     eyebrow: 'Jared workspace',
     title: 'A private control room for Jared.',
-    description: 'The guarded Jared landing route is present without exposing workflows to normal users.',
+    description:
+      'The guarded Jared landing route is present without exposing workflows to normal users.',
     note: 'Inbound review, decisions, CMS, messages, settings, and demo controls are only placeholders.',
     element: <JaredHomePage />
   },

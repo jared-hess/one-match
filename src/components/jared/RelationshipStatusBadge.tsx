@@ -33,7 +33,9 @@ export function RelationshipStatusBadge({ status, tone = 'light' }: Relationship
   const statusClassName = tone === 'dark' ? darkStatusClassName : lightStatusClassName;
 
   return (
-    <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-extrabold uppercase tracking-[0.18em] ${statusClassName[status]}`}>
+    <span
+      className={`inline-flex rounded-full border px-3 py-1 text-xs font-extrabold uppercase tracking-[0.18em] ${statusClassName[status]}`}
+    >
       {statusCopy[status]}
     </span>
   );

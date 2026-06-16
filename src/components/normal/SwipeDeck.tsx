@@ -1,6 +1,11 @@
 import { motion, useMotionValue, useTransform, type PanInfo } from 'framer-motion';
 import { useEffect, useMemo, useState } from 'react';
-import { acknowledgeSimilarityModal, getViewedCount, hasAcknowledgedSimilarityModal, recordAnonymousSwipe } from '../../lib/swipes';
+import {
+  acknowledgeSimilarityModal,
+  getViewedCount,
+  hasAcknowledgedSimilarityModal,
+  recordAnonymousSwipe
+} from '../../lib/swipes';
 import type { JaredProfile, SwipeDirection } from '../../types';
 import { CandidateSimilarityModal } from './CandidateSimilarityModal';
 import { LikeSentToast } from './LikeSentToast';
@@ -85,9 +90,16 @@ export function SwipeDeck({ profiles }: SwipeDeckProps) {
   if (!activeProfile) {
     return (
       <section className="rounded-app border border-white/80 bg-white/84 p-6 text-center shadow-card backdrop-blur-xl">
-        <p className="text-xs font-extrabold uppercase tracking-[0.28em] text-blush-600">Deck complete</p>
-        <h1 className="mt-4 font-display text-4xl font-semibold leading-none tracking-[-0.04em] text-merlot-900">You have seen today’s Jared profiles.</h1>
-        <p className="mt-4 text-sm leading-6 text-ink-600">Saved likes stay pending locally until you complete profile setup and live data is available.</p>
+        <p className="text-xs font-extrabold uppercase tracking-[0.28em] text-blush-600">
+          Deck complete
+        </p>
+        <h1 className="mt-4 font-display text-4xl font-semibold leading-none tracking-[-0.04em] text-merlot-900">
+          You have seen today’s Jared profiles.
+        </h1>
+        <p className="mt-4 text-sm leading-6 text-ink-600">
+          Saved likes stay pending locally until you complete profile setup and live data is
+          available.
+        </p>
       </section>
     );
   }
@@ -97,9 +109,13 @@ export function SwipeDeck({ profiles }: SwipeDeckProps) {
       <div className="mb-4 flex items-center justify-between">
         <div>
           <p className="text-xs font-extrabold uppercase tracking-[0.28em] text-blush-600">Swipe</p>
-          <h1 className="font-display text-4xl font-semibold leading-none tracking-[-0.04em] text-merlot-900">Choose deliberately.</h1>
+          <h1 className="font-display text-4xl font-semibold leading-none tracking-[-0.04em] text-merlot-900">
+            Choose deliberately.
+          </h1>
         </div>
-        <span className="rounded-full border border-blush-100 bg-white/80 px-3 py-1 text-xs font-extrabold text-ink-600 shadow-sm">{remainingLabel}</span>
+        <span className="rounded-full border border-blush-100 bg-white/80 px-3 py-1 text-xs font-extrabold text-ink-600 shadow-sm">
+          {remainingLabel}
+        </span>
       </div>
       <div className="relative h-[32rem]">
         {nextProfile ? (
@@ -121,7 +137,8 @@ export function SwipeDeck({ profiles }: SwipeDeckProps) {
         </motion.div>
       </div>
       <p className="mt-4 rounded-3xl border border-blush-100 bg-white/72 p-4 text-sm leading-6 text-ink-600">
-        Drag right to like, left to pass, or use Super when the signal is especially strong. Likes do not open chat.
+        Drag right to like, left to pass, or use Super when the signal is especially strong. Likes
+        do not open chat.
       </p>
       <SwipeActions onAction={finishSwipe} />
       <LikeSentToast visible={toastVisible} />

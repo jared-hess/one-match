@@ -1,13 +1,24 @@
-import { createDemoMutationResult, createUnavailableMutationResult, isDemoModeEnabled } from './demoMode';
+import {
+  createDemoMutationResult,
+  createUnavailableMutationResult,
+  isDemoModeEnabled
+} from './demoMode';
 import { getSupabase } from './supabase';
-import type { DeletionRequest, DeletionRequestStatus, DemoAwareOptions, MutationResult } from '../types';
+import type {
+  DeletionRequest,
+  DeletionRequestStatus,
+  DemoAwareOptions,
+  MutationResult
+} from '../types';
 
 export type DeletionRequestUpdate = {
   status: DeletionRequestStatus;
   notes?: string | null;
 };
 
-function timestampForStatus(status: DeletionRequestStatus): Pick<DeletionRequest, 'completed_at' | 'cancelled_at'> {
+function timestampForStatus(
+  status: DeletionRequestStatus
+): Pick<DeletionRequest, 'completed_at' | 'cancelled_at'> {
   if (status === 'completed') {
     return {
       completed_at: new Date().toISOString(),
@@ -28,7 +39,9 @@ function timestampForStatus(status: DeletionRequestStatus): Pick<DeletionRequest
   };
 }
 
-export async function createOwnDeletionRequest(options?: DemoAwareOptions): Promise<MutationResult<DeletionRequest>> {
+export async function createOwnDeletionRequest(
+  options?: DemoAwareOptions
+): Promise<MutationResult<DeletionRequest>> {
   if (isDemoModeEnabled(options)) {
     return createDemoMutationResult<DeletionRequest>();
   }
@@ -96,7 +109,11 @@ export async function fetchDeletionRequestsForJared(): Promise<DeletionRequest[]
   return data ?? [];
 }
 
-export async function updateDeletionRequestForJared(id: string, input: DeletionRequestUpdate, options?: DemoAwareOptions): Promise<MutationResult<DeletionRequest>> {
+export async function updateDeletionRequestForJared(
+  id: string,
+  input: DeletionRequestUpdate,
+  options?: DemoAwareOptions
+): Promise<MutationResult<DeletionRequest>> {
   if (isDemoModeEnabled(options)) {
     return createDemoMutationResult<DeletionRequest>();
   }

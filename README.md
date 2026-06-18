@@ -37,6 +37,9 @@ Use these exact commands:
 - `npm run cap:sync`
 - `npm run android:open`
 - `npm run android:run`
+- `npm run android:setup:check`
+- `npm run android:setup:install`
+- `npm run android:build:debug`
 - `npm run format`
 - `npm run format:check`
 - `npm run ci`
@@ -180,6 +183,44 @@ npm run android:run
 ```
 
 Re-run `npm run cap:sync` after major route, manifest, icon, or web build changes.
+
+## Linux/WSL Android debug APK build
+
+Use this flow to build a local debug APK from Ubuntu/WSL.
+
+- Supported local target is Ubuntu/WSL only.
+- Windows Android Studio workflow is not the target of this local guide.
+- Keep the repository under Linux home paths such as `/home/<user>/repos/...`, not under `/mnt/c`.
+- Java 17 is required.
+- The scripts prefer an existing valid `ANDROID_HOME`; otherwise they use `$HOME/Android/Sdk`.
+
+1. Validate prerequisites without changing the host:
+
+```bash
+npm run android:setup:check
+```
+
+2. Install missing prerequisites in a single explicit step when needed:
+
+```bash
+npm run android:setup:install -- --accept-licenses
+```
+
+3. Build the debug APK:
+
+```bash
+npm run android:build:debug
+```
+
+The expected artifact is:
+
+```
+android/app/build/outputs/apk/debug/app-debug.apk
+```
+
+This section covers only local debug APK generation on Ubuntu/WSL. Release signing, Play Store flow, AAB/release APKs, and emulator or device runtime QA are not part of this process.
+
+GitHub Actions or another CI workflow is deferred. Future CI work can call the same scripts (`android:setup:check`, `android:setup:install`, `android:build:debug`) when workflow work is started.
 
 ## Web deploy and static hosting
 
